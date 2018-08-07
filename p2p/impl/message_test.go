@@ -1,10 +1,11 @@
-package p2p
+package impl 
 
 import (
 	"bytes"
 	"testing"
 
 	"github.com/invin/kkchain/crypto/ed25519"
+	"github.com/invin/kkchain/p2p"
 	"github.com/invin/kkchain/p2p/protobuf"
 )
 
@@ -12,7 +13,7 @@ func TestSerialization(t *testing.T) {
 	// Create keypair
 	keys := ed25519.RandomKeyPair()
 	address := "localhost:12345"
-	id := CreateID(address, keys.PublicKey)
+	id := p2p.CreateID(address, keys.PublicKey)
 	
 	pid := protobuf.ID(id)
 	message := "message1"

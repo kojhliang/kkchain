@@ -46,6 +46,9 @@ message Message {
 
     // reply_flag indicates this is a reply to a request
     bool reply_flag = 6;
+
+    // protocol defines the protocol string
+    string protocol = 7;
 }
 
 message Ping {

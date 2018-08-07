@@ -1,23 +1,32 @@
 package p2p
 
 import (
+	"net"
+
 	"github.com/invin/kkchain/crypto"
 )
 
 // Config defines configurations for a basic p2p instance
 type Config struct {
-	signaturePolicy	crypto.SignaturePolicy
-	hashPolicy crypto.HashPolicy	
+	SignaturePolicy	crypto.SignaturePolicy
+	HashPolicy crypto.HashPolicy	
 }
 
-// P2P represents the whole stack of p2p communication between peers
-type P2P struct {
-	conf Config
-}
+// P2P defines the interface for p2p communication
+type P2P interface {
+	// Start kicks off the p2p stack
+	Start() error
 
-// New creates a new P2P instance with the specified configuration
-func New(conf Config) *P2P {
-	return &P2P{
-		conf: conf,
-	}
+	// Get configurations
+	Conf() Config
+
+	// Stop the p2p stack
+	Stop()
+
+	// Accept connection
+	Accept(incoming net.Conn)
+
+	// returns ID of local peer
+	ID() ID
+	
 }

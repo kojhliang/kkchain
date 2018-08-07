@@ -45,6 +45,7 @@ func generateProtos(dir string) error {
 				path,
 			}
 
+			// fmt.Println(args)
 			// Execute protoc one by one
 			cmd := exec.Command(protoc, args...)
 			if err := cmd.Run(); err != nil {
