@@ -5,29 +5,30 @@ import (
 	"fmt"
 	"crypto/sha256"
 	"math/rand"
+	"encoding/hex"
 )
 
-type DHT struct {
-	quitCh chan bool
-	table *RoutingTable
-	store *PeerStore
-	seedPeers []PeerID
-
-}
-
-func NewDHT(dbPath string, self PeerID) (*DHT, error) {
-	// If no node database was given, use an in-memory one
-	db, err := newPeerStore(dbPath)
-	if err != nil {
-		return nil, err
-	}
-
-	return &DHT{
-		quitCh: make(chan bool),
-		table: CreateRoutingTable(self),
-		store: db,
-	}, nil
-}
+//type DHT struct {
+//	quitCh chan bool
+//	table *RoutingTable
+//	store *PeerStore
+//	seedPeers []PeerID
+//
+//}
+//
+//func NewDHT(dbPath string, self PeerID) (*DHT, error) {
+//	// If no node database was given, use an in-memory one
+//	db, err := newPeerStore(dbPath)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	return &DHT{
+//		quitCh: make(chan bool),
+//		table: CreateRoutingTable(self),
+//		store: db,
+//	}, nil
+//}
 
 func (dht *DHT) Start() {
 	fmt.Println("start sync loop.....")
@@ -92,12 +93,12 @@ func (dht *DHT) SyncRouteTable() {
 	//TODO: sync peers
 
 	target := RandomTargetID()
-	syncedPeers := make(map[PeerID]bool)
+	syncedPeers := make(map[string]bool)
 
 	// sync with seed nodes.
 	for _, pid := range dht.seedPeers {
 		dht.FindTargetNeighbours(target, pid)
-		syncedPeers[pid] = true
+		syncedPeers[hex.EncodeToString(pid.Hash)] = true
 	}
 
 	// random peer selection.
@@ -114,9 +115,9 @@ func (dht *DHT) SyncRouteTable() {
 
 	for i := 0; i < peersCountToSync; i++ {
 		pid := peers[i]
-		if syncedPeers[pid] == false {
+		if syncedPeers[hex.EncodeToString(pid.Hash)] == false {
 			dht.FindTargetNeighbours(target, pid)
-			syncedPeers[pid] = true
+			syncedPeers[hex.EncodeToString(pid.Hash)] = true
 		}
 	}
 

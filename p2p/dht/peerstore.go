@@ -107,12 +107,12 @@ func (ps *PeerStore) Update(id *PeerID) error {
 		ps.mutex.Lock()
 		defer ps.mutex.Unlock()
 
-		ps.opts = append(ps.opts, operation{opTypePut,id.ID, blob})
+		ps.opts = append(ps.opts, operation{opTypePut,id.Hash, blob})
 		return nil
 	}
 
 
-	return ps.db.Put(id.ID, blob, nil)
+	return ps.db.Put(id.Hash, blob, nil)
 }
 
 // Delete delete the specify key
@@ -122,11 +122,11 @@ func (ps *PeerStore) Delete(id *PeerID) error {
 		ps.mutex.Lock()
 		defer ps.mutex.Unlock()
 
-		ps.opts = append(ps.opts, operation{opTypeDel,id.ID, nil})
+		ps.opts = append(ps.opts, operation{opTypeDel,id.Hash, nil})
 		return nil
 	}
 
-	deleter := ps.db.NewIterator(util.BytesPrefix(id.ID), nil)
+	deleter := ps.db.NewIterator(util.BytesPrefix(id.Hash), nil)
 	for deleter.Next() {
 		if err := ps.db.Delete(deleter.Key(), nil); err != nil {
 			return err

@@ -7,36 +7,36 @@ import (
 	"math/bits"
 	"crypto/sha256"
 	"time"
+	"github.com/invin/kkchain/p2p"
 )
 
 type PeerID struct {
-	Address string
-
-	PublicKey []byte
-	ID []byte
+	p2p.ID
+	Hash []byte
 	addTime time.Time
 }
 
 // CreateID is a factory function creating ID.
 func CreateID(address string, publicKey []byte) PeerID {
 	id := GetIDFromPublicKey(publicKey)
-	return PeerID{Address: address, PublicKey: publicKey, ID: id}
+
+	return PeerID{ID: p2p.CreateID(address, publicKey),Hash: id}
 }
 
 // String returns the identity address and public key.
 func (p PeerID) String() string {
-	return fmt.Sprintf("ID{Address: %s, PublicKey: %s, id: %s}", p.Address, hex.EncodeToString(p.PublicKey), hex.EncodeToString(p.ID))
+	return fmt.Sprintf("ID{Address: %s, PublicKey: %s, id: %s}", p.Address, hex.EncodeToString(p.PublicKey), hex.EncodeToString(p.Hash))
 }
 
 // Equals determines if two peer IDs are equal to each other based on the contents of their public keys.
 func (p PeerID) Equals(other PeerID) bool {
-	return bytes.Equal(p.PublicKey, other.PublicKey) || bytes.Equal(p.ID, other.ID)
+	return bytes.Equal(p.PublicKey, other.PublicKey) || bytes.Equal(p.Hash, other.Hash)
 }
 
 // Less determines if this peer ID's public key is less than other ID's public key.
 func (p PeerID) Less(other interface{}) bool {
 	if other, is := other.(PeerID); is {
-		return bytes.Compare(p.ID, other.ID) == -1
+		return bytes.Compare(p.Hash, other.Hash) == -1
 	}
 	return false
 }
@@ -48,22 +48,22 @@ func (p PeerID) PublicKeyHex() string {
 
 // Xor performs XOR (^) over another peer ID's public key.
 func (p PeerID) Xor(other PeerID) PeerID {
-	result := make([]byte, len(p.ID))
+	result := make([]byte, len(p.Hash))
 
-	for i := 0; i < len(p.ID) && i < len(other.ID); i++ {
-		result[i] = p.ID[i] ^ other.ID[i]
+	for i := 0; i < len(p.Hash) && i < len(other.Hash); i++ {
+		result[i] = p.Hash[i] ^ other.Hash[i]
 	}
-	return PeerID{Address: p.Address, PublicKey: p.PublicKey, ID: result}
+	return PeerID{ID: p.ID, Hash: result}
 }
 
 // PrefixLen returns the number of prefixed zeros in a peer ID.
 func (p PeerID) PrefixLen() int {
-	for i, b := range p.ID {
+	for i, b := range p.Hash {
 		if b != 0 {
 			return i*8 + bits.LeadingZeros8(uint8(b))
 		}
 	}
-	return len(p.ID)*8 - 1
+	return len(p.Hash)*8 - 1
 }
 
 func GetIDFromPublicKey(publicKey []byte) []byte {

@@ -36,9 +36,9 @@ func NewBucket() *Bucket {
 func CreateRoutingTable(pid PeerID) *RoutingTable {
 	table := &RoutingTable{
 		self:    pid,
-		buckets: make([]*Bucket, len(pid.ID)*8),
+		buckets: make([]*Bucket, len(pid.Hash)*8),
 	}
-	for i := 0; i < len(pid.ID)*8; i++ {
+	for i := 0; i < len(pid.Hash)*8; i++ {
 		table.buckets[i] = NewBucket()
 	}
 

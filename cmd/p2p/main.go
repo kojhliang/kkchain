@@ -20,7 +20,7 @@ func main()  {
 	peerA := dht.CreateID("111", pbKey)
 	fmt.Printf("peer A: %s\n", peerA.String())
 
-	kad,_ := dht.NewDHT("", peerA)
+	kad := dht.NewDHT(nil,"", peerA)
 
 	key, _ = dht.GenerateKey(libcrypto.Secp256k1)
 	pbKey,_ = key.GetPublic().Bytes()
