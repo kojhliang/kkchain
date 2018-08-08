@@ -49,6 +49,12 @@ func (s *Stream) Conn() p2p.Conn {
 }
 
 
+// Reset resets current stream
+func (s *Stream) Reset() error {
+	return s.conn.Close()
+}
+
+
 
 
 

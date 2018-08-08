@@ -37,7 +37,7 @@ type ID struct {
 func (m *ID) Reset()      { *m = ID{} }
 func (*ID) ProtoMessage() {}
 func (*ID) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_08d5bc77e99e65a7, []int{0}
+	return fileDescriptor_stream_5a221e613bee321d, []int{0}
 }
 func (m *ID) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -86,14 +86,12 @@ type Message struct {
 	Sender *ID `protobuf:"bytes,2,opt,name=sender" json:"sender,omitempty"`
 	// Sender's signature of message.
 	Signature []byte `protobuf:"bytes,3,opt,name=signature,proto3" json:"signature,omitempty"`
-	// request_nonce is the request/response ID. Null if ID associated to a message is not a request/response.
-	RequestNonce uint64 `protobuf:"varint,4,opt,name=request_nonce,json=requestNonce,proto3" json:"request_nonce,omitempty"`
 	// message_nonce is the sequence ID.
-	MessageNonce uint64 `protobuf:"varint,5,opt,name=message_nonce,json=messageNonce,proto3" json:"message_nonce,omitempty"`
-	// reply_flag indicates this is a reply to a request
-	ReplyFlag bool `protobuf:"varint,6,opt,name=reply_flag,json=replyFlag,proto3" json:"reply_flag,omitempty"`
+	MessageNonce uint64 `protobuf:"varint,4,opt,name=message_nonce,json=messageNonce,proto3" json:"message_nonce,omitempty"`
 	// protocol defines the protocol string
-	Protocol             string   `protobuf:"bytes,7,opt,name=protocol,proto3" json:"protocol,omitempty"`
+	Protocol string `protobuf:"bytes,5,opt,name=protocol,proto3" json:"protocol,omitempty"`
+	// compress
+	CompressAlgorithm    uint32   `protobuf:"varint,6,opt,name=compress_algorithm,json=compressAlgorithm,proto3" json:"compress_algorithm,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
@@ -101,7 +99,7 @@ type Message struct {
 func (m *Message) Reset()      { *m = Message{} }
 func (*Message) ProtoMessage() {}
 func (*Message) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_08d5bc77e99e65a7, []int{1}
+	return fileDescriptor_stream_5a221e613bee321d, []int{1}
 }
 func (m *Message) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -151,25 +149,11 @@ func (m *Message) GetSignature() []byte {
 	return nil
 }
 
-func (m *Message) GetRequestNonce() uint64 {
-	if m != nil {
-		return m.RequestNonce
-	}
-	return 0
-}
-
 func (m *Message) GetMessageNonce() uint64 {
 	if m != nil {
 		return m.MessageNonce
 	}
 	return 0
-}
-
-func (m *Message) GetReplyFlag() bool {
-	if m != nil {
-		return m.ReplyFlag
-	}
-	return false
 }
 
 func (m *Message) GetProtocol() string {
@@ -179,223 +163,16 @@ func (m *Message) GetProtocol() string {
 	return ""
 }
 
-type Ping struct {
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *Ping) Reset()      { *m = Ping{} }
-func (*Ping) ProtoMessage() {}
-func (*Ping) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_08d5bc77e99e65a7, []int{2}
-}
-func (m *Ping) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *Ping) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_Ping.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (dst *Ping) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Ping.Merge(dst, src)
-}
-func (m *Ping) XXX_Size() int {
-	return m.Size()
-}
-func (m *Ping) XXX_DiscardUnknown() {
-	xxx_messageInfo_Ping.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Ping proto.InternalMessageInfo
-
-type Pong struct {
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *Pong) Reset()      { *m = Pong{} }
-func (*Pong) ProtoMessage() {}
-func (*Pong) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_08d5bc77e99e65a7, []int{3}
-}
-func (m *Pong) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *Pong) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_Pong.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (dst *Pong) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Pong.Merge(dst, src)
-}
-func (m *Pong) XXX_Size() int {
-	return m.Size()
-}
-func (m *Pong) XXX_DiscardUnknown() {
-	xxx_messageInfo_Pong.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Pong proto.InternalMessageInfo
-
-type LookupNodeRequest struct {
-	Target               *ID      `protobuf:"bytes,1,opt,name=target" json:"target,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *LookupNodeRequest) Reset()      { *m = LookupNodeRequest{} }
-func (*LookupNodeRequest) ProtoMessage() {}
-func (*LookupNodeRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_08d5bc77e99e65a7, []int{4}
-}
-func (m *LookupNodeRequest) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *LookupNodeRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_LookupNodeRequest.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (dst *LookupNodeRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LookupNodeRequest.Merge(dst, src)
-}
-func (m *LookupNodeRequest) XXX_Size() int {
-	return m.Size()
-}
-func (m *LookupNodeRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_LookupNodeRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_LookupNodeRequest proto.InternalMessageInfo
-
-func (m *LookupNodeRequest) GetTarget() *ID {
+func (m *Message) GetCompressAlgorithm() uint32 {
 	if m != nil {
-		return m.Target
+		return m.CompressAlgorithm
 	}
-	return nil
-}
-
-type LookupNodeResponse struct {
-	Peers                []*ID    `protobuf:"bytes,1,rep,name=peers" json:"peers,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *LookupNodeResponse) Reset()      { *m = LookupNodeResponse{} }
-func (*LookupNodeResponse) ProtoMessage() {}
-func (*LookupNodeResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_08d5bc77e99e65a7, []int{5}
-}
-func (m *LookupNodeResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *LookupNodeResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_LookupNodeResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (dst *LookupNodeResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LookupNodeResponse.Merge(dst, src)
-}
-func (m *LookupNodeResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *LookupNodeResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_LookupNodeResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_LookupNodeResponse proto.InternalMessageInfo
-
-func (m *LookupNodeResponse) GetPeers() []*ID {
-	if m != nil {
-		return m.Peers
-	}
-	return nil
-}
-
-type Bytes struct {
-	Data                 []byte   `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *Bytes) Reset()      { *m = Bytes{} }
-func (*Bytes) ProtoMessage() {}
-func (*Bytes) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_08d5bc77e99e65a7, []int{6}
-}
-func (m *Bytes) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *Bytes) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_Bytes.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (dst *Bytes) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Bytes.Merge(dst, src)
-}
-func (m *Bytes) XXX_Size() int {
-	return m.Size()
-}
-func (m *Bytes) XXX_DiscardUnknown() {
-	xxx_messageInfo_Bytes.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Bytes proto.InternalMessageInfo
-
-func (m *Bytes) GetData() []byte {
-	if m != nil {
-		return m.Data
-	}
-	return nil
+	return 0
 }
 
 func init() {
 	proto.RegisterType((*ID)(nil), "protobuf.ID")
 	proto.RegisterType((*Message)(nil), "protobuf.Message")
-	proto.RegisterType((*Ping)(nil), "protobuf.Ping")
-	proto.RegisterType((*Pong)(nil), "protobuf.Pong")
-	proto.RegisterType((*LookupNodeRequest)(nil), "protobuf.LookupNodeRequest")
-	proto.RegisterType((*LookupNodeResponse)(nil), "protobuf.LookupNodeResponse")
-	proto.RegisterType((*Bytes)(nil), "protobuf.Bytes")
 }
 func (this *ID) VerboseEqual(that interface{}) error {
 	if that == nil {
@@ -491,17 +268,14 @@ func (this *Message) VerboseEqual(that interface{}) error {
 	if !bytes.Equal(this.Signature, that1.Signature) {
 		return fmt.Errorf("Signature this(%v) Not Equal that(%v)", this.Signature, that1.Signature)
 	}
-	if this.RequestNonce != that1.RequestNonce {
-		return fmt.Errorf("RequestNonce this(%v) Not Equal that(%v)", this.RequestNonce, that1.RequestNonce)
-	}
 	if this.MessageNonce != that1.MessageNonce {
 		return fmt.Errorf("MessageNonce this(%v) Not Equal that(%v)", this.MessageNonce, that1.MessageNonce)
 	}
-	if this.ReplyFlag != that1.ReplyFlag {
-		return fmt.Errorf("ReplyFlag this(%v) Not Equal that(%v)", this.ReplyFlag, that1.ReplyFlag)
-	}
 	if this.Protocol != that1.Protocol {
 		return fmt.Errorf("Protocol this(%v) Not Equal that(%v)", this.Protocol, that1.Protocol)
+	}
+	if this.CompressAlgorithm != that1.CompressAlgorithm {
+		return fmt.Errorf("CompressAlgorithm this(%v) Not Equal that(%v)", this.CompressAlgorithm, that1.CompressAlgorithm)
 	}
 	return nil
 }
@@ -533,284 +307,13 @@ func (this *Message) Equal(that interface{}) bool {
 	if !bytes.Equal(this.Signature, that1.Signature) {
 		return false
 	}
-	if this.RequestNonce != that1.RequestNonce {
-		return false
-	}
 	if this.MessageNonce != that1.MessageNonce {
-		return false
-	}
-	if this.ReplyFlag != that1.ReplyFlag {
 		return false
 	}
 	if this.Protocol != that1.Protocol {
 		return false
 	}
-	return true
-}
-func (this *Ping) VerboseEqual(that interface{}) error {
-	if that == nil {
-		if this == nil {
-			return nil
-		}
-		return fmt.Errorf("that == nil && this != nil")
-	}
-
-	that1, ok := that.(*Ping)
-	if !ok {
-		that2, ok := that.(Ping)
-		if ok {
-			that1 = &that2
-		} else {
-			return fmt.Errorf("that is not of type *Ping")
-		}
-	}
-	if that1 == nil {
-		if this == nil {
-			return nil
-		}
-		return fmt.Errorf("that is type *Ping but is nil && this != nil")
-	} else if this == nil {
-		return fmt.Errorf("that is type *Ping but is not nil && this == nil")
-	}
-	return nil
-}
-func (this *Ping) Equal(that interface{}) bool {
-	if that == nil {
-		return this == nil
-	}
-
-	that1, ok := that.(*Ping)
-	if !ok {
-		that2, ok := that.(Ping)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		return this == nil
-	} else if this == nil {
-		return false
-	}
-	return true
-}
-func (this *Pong) VerboseEqual(that interface{}) error {
-	if that == nil {
-		if this == nil {
-			return nil
-		}
-		return fmt.Errorf("that == nil && this != nil")
-	}
-
-	that1, ok := that.(*Pong)
-	if !ok {
-		that2, ok := that.(Pong)
-		if ok {
-			that1 = &that2
-		} else {
-			return fmt.Errorf("that is not of type *Pong")
-		}
-	}
-	if that1 == nil {
-		if this == nil {
-			return nil
-		}
-		return fmt.Errorf("that is type *Pong but is nil && this != nil")
-	} else if this == nil {
-		return fmt.Errorf("that is type *Pong but is not nil && this == nil")
-	}
-	return nil
-}
-func (this *Pong) Equal(that interface{}) bool {
-	if that == nil {
-		return this == nil
-	}
-
-	that1, ok := that.(*Pong)
-	if !ok {
-		that2, ok := that.(Pong)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		return this == nil
-	} else if this == nil {
-		return false
-	}
-	return true
-}
-func (this *LookupNodeRequest) VerboseEqual(that interface{}) error {
-	if that == nil {
-		if this == nil {
-			return nil
-		}
-		return fmt.Errorf("that == nil && this != nil")
-	}
-
-	that1, ok := that.(*LookupNodeRequest)
-	if !ok {
-		that2, ok := that.(LookupNodeRequest)
-		if ok {
-			that1 = &that2
-		} else {
-			return fmt.Errorf("that is not of type *LookupNodeRequest")
-		}
-	}
-	if that1 == nil {
-		if this == nil {
-			return nil
-		}
-		return fmt.Errorf("that is type *LookupNodeRequest but is nil && this != nil")
-	} else if this == nil {
-		return fmt.Errorf("that is type *LookupNodeRequest but is not nil && this == nil")
-	}
-	if !this.Target.Equal(that1.Target) {
-		return fmt.Errorf("Target this(%v) Not Equal that(%v)", this.Target, that1.Target)
-	}
-	return nil
-}
-func (this *LookupNodeRequest) Equal(that interface{}) bool {
-	if that == nil {
-		return this == nil
-	}
-
-	that1, ok := that.(*LookupNodeRequest)
-	if !ok {
-		that2, ok := that.(LookupNodeRequest)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		return this == nil
-	} else if this == nil {
-		return false
-	}
-	if !this.Target.Equal(that1.Target) {
-		return false
-	}
-	return true
-}
-func (this *LookupNodeResponse) VerboseEqual(that interface{}) error {
-	if that == nil {
-		if this == nil {
-			return nil
-		}
-		return fmt.Errorf("that == nil && this != nil")
-	}
-
-	that1, ok := that.(*LookupNodeResponse)
-	if !ok {
-		that2, ok := that.(LookupNodeResponse)
-		if ok {
-			that1 = &that2
-		} else {
-			return fmt.Errorf("that is not of type *LookupNodeResponse")
-		}
-	}
-	if that1 == nil {
-		if this == nil {
-			return nil
-		}
-		return fmt.Errorf("that is type *LookupNodeResponse but is nil && this != nil")
-	} else if this == nil {
-		return fmt.Errorf("that is type *LookupNodeResponse but is not nil && this == nil")
-	}
-	if len(this.Peers) != len(that1.Peers) {
-		return fmt.Errorf("Peers this(%v) Not Equal that(%v)", len(this.Peers), len(that1.Peers))
-	}
-	for i := range this.Peers {
-		if !this.Peers[i].Equal(that1.Peers[i]) {
-			return fmt.Errorf("Peers this[%v](%v) Not Equal that[%v](%v)", i, this.Peers[i], i, that1.Peers[i])
-		}
-	}
-	return nil
-}
-func (this *LookupNodeResponse) Equal(that interface{}) bool {
-	if that == nil {
-		return this == nil
-	}
-
-	that1, ok := that.(*LookupNodeResponse)
-	if !ok {
-		that2, ok := that.(LookupNodeResponse)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		return this == nil
-	} else if this == nil {
-		return false
-	}
-	if len(this.Peers) != len(that1.Peers) {
-		return false
-	}
-	for i := range this.Peers {
-		if !this.Peers[i].Equal(that1.Peers[i]) {
-			return false
-		}
-	}
-	return true
-}
-func (this *Bytes) VerboseEqual(that interface{}) error {
-	if that == nil {
-		if this == nil {
-			return nil
-		}
-		return fmt.Errorf("that == nil && this != nil")
-	}
-
-	that1, ok := that.(*Bytes)
-	if !ok {
-		that2, ok := that.(Bytes)
-		if ok {
-			that1 = &that2
-		} else {
-			return fmt.Errorf("that is not of type *Bytes")
-		}
-	}
-	if that1 == nil {
-		if this == nil {
-			return nil
-		}
-		return fmt.Errorf("that is type *Bytes but is nil && this != nil")
-	} else if this == nil {
-		return fmt.Errorf("that is type *Bytes but is not nil && this == nil")
-	}
-	if !bytes.Equal(this.Data, that1.Data) {
-		return fmt.Errorf("Data this(%v) Not Equal that(%v)", this.Data, that1.Data)
-	}
-	return nil
-}
-func (this *Bytes) Equal(that interface{}) bool {
-	if that == nil {
-		return this == nil
-	}
-
-	that1, ok := that.(*Bytes)
-	if !ok {
-		that2, ok := that.(Bytes)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		return this == nil
-	} else if this == nil {
-		return false
-	}
-	if !bytes.Equal(this.Data, that1.Data) {
+	if this.CompressAlgorithm != that1.CompressAlgorithm {
 		return false
 	}
 	return true
@@ -830,7 +333,7 @@ func (this *Message) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 11)
+	s := make([]string, 0, 10)
 	s = append(s, "&protobuf.Message{")
 	if this.Message != nil {
 		s = append(s, "Message: "+fmt.Sprintf("%#v", this.Message)+",\n")
@@ -839,62 +342,9 @@ func (this *Message) GoString() string {
 		s = append(s, "Sender: "+fmt.Sprintf("%#v", this.Sender)+",\n")
 	}
 	s = append(s, "Signature: "+fmt.Sprintf("%#v", this.Signature)+",\n")
-	s = append(s, "RequestNonce: "+fmt.Sprintf("%#v", this.RequestNonce)+",\n")
 	s = append(s, "MessageNonce: "+fmt.Sprintf("%#v", this.MessageNonce)+",\n")
-	s = append(s, "ReplyFlag: "+fmt.Sprintf("%#v", this.ReplyFlag)+",\n")
 	s = append(s, "Protocol: "+fmt.Sprintf("%#v", this.Protocol)+",\n")
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *Ping) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 4)
-	s = append(s, "&protobuf.Ping{")
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *Pong) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 4)
-	s = append(s, "&protobuf.Pong{")
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *LookupNodeRequest) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 5)
-	s = append(s, "&protobuf.LookupNodeRequest{")
-	if this.Target != nil {
-		s = append(s, "Target: "+fmt.Sprintf("%#v", this.Target)+",\n")
-	}
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *LookupNodeResponse) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 5)
-	s = append(s, "&protobuf.LookupNodeResponse{")
-	if this.Peers != nil {
-		s = append(s, "Peers: "+fmt.Sprintf("%#v", this.Peers)+",\n")
-	}
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *Bytes) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 5)
-	s = append(s, "&protobuf.Bytes{")
-	s = append(s, "Data: "+fmt.Sprintf("%#v", this.Data)+",\n")
+	s = append(s, "CompressAlgorithm: "+fmt.Sprintf("%#v", this.CompressAlgorithm)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -977,149 +427,21 @@ func (m *Message) MarshalTo(dAtA []byte) (int, error) {
 		i = encodeVarintStream(dAtA, i, uint64(len(m.Signature)))
 		i += copy(dAtA[i:], m.Signature)
 	}
-	if m.RequestNonce != 0 {
-		dAtA[i] = 0x20
-		i++
-		i = encodeVarintStream(dAtA, i, uint64(m.RequestNonce))
-	}
 	if m.MessageNonce != 0 {
-		dAtA[i] = 0x28
+		dAtA[i] = 0x20
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(m.MessageNonce))
 	}
-	if m.ReplyFlag {
-		dAtA[i] = 0x30
-		i++
-		if m.ReplyFlag {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i++
-	}
 	if len(m.Protocol) > 0 {
-		dAtA[i] = 0x3a
+		dAtA[i] = 0x2a
 		i++
 		i = encodeVarintStream(dAtA, i, uint64(len(m.Protocol)))
 		i += copy(dAtA[i:], m.Protocol)
 	}
-	return i, nil
-}
-
-func (m *Ping) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *Ping) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	return i, nil
-}
-
-func (m *Pong) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *Pong) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	return i, nil
-}
-
-func (m *LookupNodeRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *LookupNodeRequest) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.Target != nil {
-		dAtA[i] = 0xa
+	if m.CompressAlgorithm != 0 {
+		dAtA[i] = 0x30
 		i++
-		i = encodeVarintStream(dAtA, i, uint64(m.Target.Size()))
-		n3, err := m.Target.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n3
-	}
-	return i, nil
-}
-
-func (m *LookupNodeResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *LookupNodeResponse) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if len(m.Peers) > 0 {
-		for _, msg := range m.Peers {
-			dAtA[i] = 0xa
-			i++
-			i = encodeVarintStream(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
-		}
-	}
-	return i, nil
-}
-
-func (m *Bytes) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *Bytes) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if len(m.Data) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintStream(dAtA, i, uint64(len(m.Data)))
-		i += copy(dAtA[i:], m.Data)
+		i = encodeVarintStream(dAtA, i, uint64(m.CompressAlgorithm))
 	}
 	return i, nil
 }
@@ -1162,62 +484,15 @@ func (m *Message) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovStream(uint64(l))
 	}
-	if m.RequestNonce != 0 {
-		n += 1 + sovStream(uint64(m.RequestNonce))
-	}
 	if m.MessageNonce != 0 {
 		n += 1 + sovStream(uint64(m.MessageNonce))
-	}
-	if m.ReplyFlag {
-		n += 2
 	}
 	l = len(m.Protocol)
 	if l > 0 {
 		n += 1 + l + sovStream(uint64(l))
 	}
-	return n
-}
-
-func (m *Ping) Size() (n int) {
-	var l int
-	_ = l
-	return n
-}
-
-func (m *Pong) Size() (n int) {
-	var l int
-	_ = l
-	return n
-}
-
-func (m *LookupNodeRequest) Size() (n int) {
-	var l int
-	_ = l
-	if m.Target != nil {
-		l = m.Target.Size()
-		n += 1 + l + sovStream(uint64(l))
-	}
-	return n
-}
-
-func (m *LookupNodeResponse) Size() (n int) {
-	var l int
-	_ = l
-	if len(m.Peers) > 0 {
-		for _, e := range m.Peers {
-			l = e.Size()
-			n += 1 + l + sovStream(uint64(l))
-		}
-	}
-	return n
-}
-
-func (m *Bytes) Size() (n int) {
-	var l int
-	_ = l
-	l = len(m.Data)
-	if l > 0 {
-		n += 1 + l + sovStream(uint64(l))
+	if m.CompressAlgorithm != 0 {
+		n += 1 + sovStream(uint64(m.CompressAlgorithm))
 	}
 	return n
 }
@@ -1254,58 +529,9 @@ func (this *Message) String() string {
 		`Message:` + strings.Replace(fmt.Sprintf("%v", this.Message), "Any", "types.Any", 1) + `,`,
 		`Sender:` + strings.Replace(fmt.Sprintf("%v", this.Sender), "ID", "ID", 1) + `,`,
 		`Signature:` + fmt.Sprintf("%v", this.Signature) + `,`,
-		`RequestNonce:` + fmt.Sprintf("%v", this.RequestNonce) + `,`,
 		`MessageNonce:` + fmt.Sprintf("%v", this.MessageNonce) + `,`,
-		`ReplyFlag:` + fmt.Sprintf("%v", this.ReplyFlag) + `,`,
 		`Protocol:` + fmt.Sprintf("%v", this.Protocol) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *Ping) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&Ping{`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *Pong) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&Pong{`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *LookupNodeRequest) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&LookupNodeRequest{`,
-		`Target:` + strings.Replace(fmt.Sprintf("%v", this.Target), "ID", "ID", 1) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *LookupNodeResponse) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&LookupNodeResponse{`,
-		`Peers:` + strings.Replace(fmt.Sprintf("%v", this.Peers), "ID", "ID", 1) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *Bytes) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&Bytes{`,
-		`Data:` + fmt.Sprintf("%v", this.Data) + `,`,
+		`CompressAlgorithm:` + fmt.Sprintf("%v", this.CompressAlgorithm) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -1556,25 +782,6 @@ func (m *Message) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 4:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field RequestNonce", wireType)
-			}
-			m.RequestNonce = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStream
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.RequestNonce |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 5:
-			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field MessageNonce", wireType)
 			}
 			m.MessageNonce = 0
@@ -1592,27 +799,7 @@ func (m *Message) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-		case 6:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ReplyFlag", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStream
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.ReplyFlag = bool(v != 0)
-		case 7:
+		case 5:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Protocol", wireType)
 			}
@@ -1641,161 +828,11 @@ func (m *Message) Unmarshal(dAtA []byte) error {
 			}
 			m.Protocol = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipStream(dAtA[iNdEx:])
-			if err != nil {
-				return err
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CompressAlgorithm", wireType)
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *Ping) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowStream
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: Ping: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Ping: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipStream(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *Pong) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowStream
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: Pong: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Pong: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipStream(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *LookupNodeRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowStream
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: LookupNodeRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: LookupNodeRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Target", wireType)
-			}
-			var msglen int
+			m.CompressAlgorithm = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowStream
@@ -1805,187 +842,11 @@ func (m *LookupNodeRequest) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
+				m.CompressAlgorithm |= (uint32(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if msglen < 0 {
-				return ErrInvalidLengthStream
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Target == nil {
-				m.Target = &ID{}
-			}
-			if err := m.Target.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipStream(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *LookupNodeResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowStream
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: LookupNodeResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: LookupNodeResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Peers", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStream
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthStream
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Peers = append(m.Peers, &ID{})
-			if err := m.Peers[len(m.Peers)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipStream(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthStream
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *Bytes) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowStream
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: Bytes: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Bytes: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Data", wireType)
-			}
-			var byteLen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStream
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				byteLen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if byteLen < 0 {
-				return ErrInvalidLengthStream
-			}
-			postIndex := iNdEx + byteLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Data = append(m.Data[:0], dAtA[iNdEx:postIndex]...)
-			if m.Data == nil {
-				m.Data = []byte{}
-			}
-			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipStream(dAtA[iNdEx:])
@@ -2112,36 +973,30 @@ var (
 	ErrIntOverflowStream   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("p2p/protobuf/stream.proto", fileDescriptor_stream_08d5bc77e99e65a7) }
+func init() { proto.RegisterFile("p2p/protobuf/stream.proto", fileDescriptor_stream_5a221e613bee321d) }
 
-var fileDescriptor_stream_08d5bc77e99e65a7 = []byte{
-	// 440 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x64, 0x91, 0x4f, 0x8e, 0xd3, 0x30,
-	0x14, 0xc6, 0xc7, 0x9d, 0xfe, 0x99, 0xbe, 0x29, 0x0b, 0x2c, 0x24, 0x32, 0x85, 0xb1, 0xa2, 0xc0,
-	0xa2, 0xab, 0x8c, 0x54, 0x36, 0xb0, 0x60, 0x41, 0x19, 0x21, 0x8d, 0xca, 0x8c, 0xaa, 0x5c, 0xa0,
-	0x72, 0x9b, 0x37, 0x26, 0x6a, 0xc6, 0x0e, 0xb6, 0x83, 0x94, 0x1d, 0xe2, 0x04, 0x1c, 0x83, 0xa3,
-	0xb0, 0x64, 0xc9, 0x72, 0x1a, 0x2e, 0xc0, 0x11, 0x50, 0xec, 0xb4, 0x45, 0xb0, 0xca, 0xfb, 0xbe,
-	0xf7, 0xb3, 0xfd, 0xbd, 0x17, 0x38, 0x2b, 0xa6, 0xc5, 0x45, 0xa1, 0x95, 0x55, 0xab, 0xf2, 0xf6,
-	0xc2, 0x58, 0x8d, 0xfc, 0x2e, 0x76, 0x9a, 0x9e, 0xec, 0xec, 0xf1, 0x99, 0x50, 0x4a, 0xe4, 0x78,
-	0xe0, 0xb8, 0xac, 0x3c, 0x34, 0x8e, 0x84, 0x12, 0xea, 0xd0, 0x68, 0x94, 0x13, 0xae, 0xf2, 0x4c,
-	0xf4, 0x1a, 0x3a, 0x57, 0x97, 0xf4, 0x1c, 0xa0, 0x28, 0x57, 0x79, 0xb6, 0x5e, 0x6e, 0xb0, 0x0a,
-	0x48, 0x48, 0x26, 0xa3, 0x64, 0xe8, 0x9d, 0x39, 0x56, 0x34, 0x80, 0x01, 0x4f, 0x53, 0x8d, 0xc6,
-	0x04, 0x9d, 0x90, 0x4c, 0x86, 0xc9, 0x4e, 0x46, 0x5f, 0x3a, 0x30, 0xb8, 0x46, 0x63, 0xb8, 0x40,
-	0x1a, 0xc3, 0xe0, 0xce, 0x97, 0xee, 0x86, 0xd3, 0xe9, 0xa3, 0xd8, 0x67, 0x8b, 0x77, 0x11, 0xe2,
-	0x37, 0xb2, 0x4a, 0x76, 0x10, 0x7d, 0x0e, 0x7d, 0x83, 0x32, 0x45, 0xed, 0x2e, 0x3d, 0x9d, 0x8e,
-	0x0e, 0xdc, 0xd5, 0x65, 0xd2, 0xf6, 0xe8, 0x53, 0x18, 0x9a, 0x4c, 0x48, 0x6e, 0x4b, 0x8d, 0xc1,
-	0xb1, 0x4f, 0xb6, 0x37, 0xe8, 0x33, 0x78, 0xa0, 0xf1, 0x63, 0x89, 0xc6, 0x2e, 0xa5, 0x92, 0x6b,
-	0x0c, 0xba, 0x21, 0x99, 0x74, 0x93, 0x51, 0x6b, 0xde, 0x34, 0x5e, 0x03, 0xb5, 0x6f, 0xb6, 0x50,
-	0xcf, 0x43, 0xad, 0xe9, 0xa1, 0x73, 0x00, 0x8d, 0x45, 0x5e, 0x2d, 0x6f, 0x73, 0x2e, 0x82, 0x7e,
-	0x48, 0x26, 0x27, 0xc9, 0xd0, 0x39, 0xef, 0x72, 0x2e, 0xe8, 0x18, 0xfc, 0xca, 0xd7, 0x2a, 0x0f,
-	0x06, 0x6e, 0x07, 0x7b, 0x1d, 0xf5, 0xa1, 0xbb, 0xc8, 0xa4, 0x70, 0x5f, 0x25, 0x45, 0xf4, 0x0a,
-	0x1e, 0xbe, 0x57, 0x6a, 0x53, 0x16, 0x37, 0x2a, 0xc5, 0xc4, 0x27, 0x69, 0xa6, 0xb5, 0x5c, 0x0b,
-	0xb4, 0xed, 0x72, 0xfe, 0x99, 0xd6, 0xf7, 0xa2, 0x97, 0x40, 0xff, 0x3e, 0x6a, 0x0a, 0x25, 0x0d,
-	0xd2, 0x08, 0x7a, 0x05, 0xa2, 0x36, 0x01, 0x09, 0x8f, 0xff, 0x3b, 0xea, 0x5b, 0xd1, 0x13, 0xe8,
-	0xcd, 0x2a, 0x8b, 0x86, 0x52, 0xe8, 0xa6, 0xdc, 0xf2, 0xf6, 0x2f, 0xba, 0x7a, 0x76, 0xfd, 0x73,
-	0xcb, 0x8e, 0xee, 0xb7, 0x8c, 0xfc, 0xde, 0x32, 0xf2, 0xb9, 0x66, 0xe4, 0x5b, 0xcd, 0xc8, 0xf7,
-	0x9a, 0x91, 0x1f, 0x35, 0x23, 0xf7, 0x35, 0x23, 0x5f, 0x7f, 0xb1, 0x23, 0x78, 0xac, 0xb4, 0x88,
-	0x33, 0xf9, 0x29, 0x93, 0xf1, 0x66, 0xb3, 0xfe, 0xc0, 0x33, 0xe9, 0x1f, 0x9a, 0x8d, 0xe6, 0xf3,
-	0xb7, 0x8d, 0x5c, 0x34, 0x6a, 0x41, 0x56, 0x7d, 0x67, 0xbf, 0xf8, 0x13, 0x00, 0x00, 0xff, 0xff,
-	0x71, 0xed, 0xd0, 0xa0, 0xa1, 0x02, 0x00, 0x00,
+var fileDescriptor_stream_5a221e613bee321d = []byte{
+	// 349 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x44, 0x90, 0x41, 0x4e, 0xf2, 0x40,
+	0x1c, 0xc5, 0xf9, 0xf3, 0xf1, 0x81, 0x0c, 0x65, 0xe1, 0xc4, 0xc4, 0x42, 0x74, 0xd2, 0xa0, 0x8b,
+	0x6e, 0x2c, 0x09, 0xae, 0x5d, 0x80, 0x6c, 0x08, 0xc1, 0x90, 0x5e, 0x80, 0x94, 0x32, 0x0e, 0x0d,
+	0xed, 0x4c, 0xd3, 0x29, 0x26, 0xdd, 0x79, 0x04, 0x8f, 0xe1, 0x51, 0x5c, 0xba, 0x74, 0x09, 0x75,
+	0x6d, 0xe2, 0x11, 0x4c, 0x67, 0x28, 0xec, 0xe6, 0xf7, 0xde, 0xcb, 0xcb, 0xfb, 0x0f, 0xea, 0xc4,
+	0x83, 0xb8, 0x1f, 0x27, 0x22, 0x15, 0xcb, 0xed, 0x73, 0x5f, 0xa6, 0x09, 0xf5, 0x22, 0x47, 0x31,
+	0x3e, 0x2b, 0xe5, 0x6e, 0x87, 0x09, 0xc1, 0x42, 0x7a, 0xca, 0x79, 0x3c, 0xd3, 0xa1, 0x6e, 0x8f,
+	0x09, 0x26, 0x4e, 0x46, 0x41, 0x0a, 0xd4, 0x4b, 0x67, 0x7a, 0x0f, 0xa8, 0x3a, 0x19, 0xe3, 0x6b,
+	0x84, 0xe2, 0xed, 0x32, 0x0c, 0xfc, 0xc5, 0x86, 0x66, 0x26, 0x58, 0x60, 0x1b, 0x6e, 0x53, 0x2b,
+	0x53, 0x9a, 0x61, 0x13, 0x35, 0xbc, 0xd5, 0x2a, 0xa1, 0x52, 0x9a, 0x55, 0x0b, 0xec, 0xa6, 0x5b,
+	0x62, 0xef, 0x07, 0x50, 0x63, 0x46, 0xa5, 0xf4, 0x18, 0xc5, 0x0e, 0x6a, 0x44, 0xfa, 0xa9, 0x1a,
+	0x5a, 0x83, 0x0b, 0x47, 0x6f, 0x73, 0xca, 0x09, 0xce, 0x90, 0x67, 0x6e, 0x19, 0xc2, 0xb7, 0xa8,
+	0x2e, 0x29, 0x5f, 0xd1, 0x44, 0x95, 0xb6, 0x06, 0xc6, 0x29, 0x37, 0x19, 0xbb, 0x07, 0x0f, 0x5f,
+	0xa1, 0xa6, 0x0c, 0x18, 0xf7, 0xd2, 0x6d, 0x42, 0xcd, 0x7f, 0x7a, 0xd9, 0x51, 0xc0, 0x37, 0xa8,
+	0x7d, 0xa8, 0x5b, 0x70, 0xc1, 0x7d, 0x6a, 0xd6, 0x2c, 0xb0, 0x6b, 0xae, 0x71, 0x10, 0x9f, 0x0a,
+	0x0d, 0x77, 0x91, 0xfe, 0x2e, 0x5f, 0x84, 0xe6, 0x7f, 0xb5, 0xff, 0xc8, 0xf8, 0x0e, 0x61, 0x5f,
+	0x44, 0x71, 0x71, 0xcc, 0xc2, 0x0b, 0x99, 0x48, 0x82, 0x74, 0x1d, 0x99, 0x75, 0x0b, 0xec, 0xb6,
+	0x7b, 0x5e, 0x3a, 0xc3, 0xd2, 0x18, 0xcd, 0xbe, 0xf6, 0xa4, 0xb2, 0xdb, 0x13, 0xf8, 0xdd, 0x13,
+	0x78, 0xcd, 0x09, 0xbc, 0xe7, 0x04, 0x3e, 0x72, 0x02, 0x9f, 0x39, 0x81, 0x5d, 0x4e, 0xe0, 0xed,
+	0x9b, 0x54, 0xd0, 0xa5, 0x48, 0x98, 0x13, 0xf0, 0x97, 0x80, 0x3b, 0x9b, 0x8d, 0xbf, 0xf6, 0x02,
+	0xae, 0x4f, 0x1b, 0x19, 0xd3, 0xe9, 0x63, 0x81, 0xf3, 0x82, 0xe6, 0xb0, 0xac, 0x2b, 0xf9, 0xfe,
+	0x2f, 0x00, 0x00, 0xff, 0xff, 0x8f, 0x0e, 0x90, 0xd8, 0xea, 0x01, 0x00, 0x00,
 }

@@ -1,9 +1,9 @@
 syntax = "proto3";
 
-package protobuf;
+package pb;
 
 option java_multiple_files = true;
-option java_package = "org.invin.kkchain.proto";
+option java_package = "org.invin.kkchain.proto.handshake";
 option java_outer_classname = "KKChainProto";
 
 import "google/protobuf/any.proto";
@@ -24,26 +24,45 @@ option (gogoproto.verbose_equal_all) = true;
 // option (gogoproto.populate_all) = true;
 // option (gogoproto.testgen_all) = true;
 
-message ID {
-    bytes public_key = 1;
-    string address = 2;
+message Error {
+    // error code
+    int32   code = 1;
+    // description
+    string  desc = 2;
 }
 
 message Message {
-    google.protobuf.Any message = 1;
+    enum Type {
+		HELLO = 0;
+		HELLO_OK = 1;
+        HELLO_ERROR = 2;
+    }
 
-    // Sender's address and public key.
-    ID sender = 2;
+    // defines what type of message it is.
+	Type type = 1;
 
-    // Sender's signature of message.
-    bytes signature = 3;
+    // protodcol version
+    string protocol_version = 2;
 
-    // message_nonce is the sequence ID.
-    uint64 message_nonce = 4;
+    // chain ID
+    bytes chain_id = 3;
 
-    // protocol defines the protocol string
-    string protocol = 5;
+    // genesis hash
+    bytes genesis_hash = 4;
 
-    // compress
-    uint32 compress_algorithm = 6;
+    // head hash
+    bytes head_hash = 5;
+
+    // head num
+    uint64 head_num = 6;
+
+    // error info for HELLO_ERROR
+    Error error = 7;
+
+    // other parameters
+
 }
+
+
+
+

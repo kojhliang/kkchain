@@ -1,43 +1,43 @@
-package dht
+package chain 
 
 import (
 	"context"
 
 	"github.com/invin/kkchain/p2p"
-	"github.com/invin/kkchain/p2p/dht/pb"
+	"github.com/invin/kkchain/p2p/chain/pb"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/glog"
 )
 
 const (
-	protocolDHT = "/kkchain/p2p/dht/1.0.0"
+	protocolChain = "/kkchain/p2p/chain/1.0.0"
 )
 
-// DHT implements a Distributed Hash Table for p2p
-type DHT struct {
+// Chain implements protocol for chain related messages
+type Chain struct {
 	// self
 	host p2p.Host
 }
 
-// NewDHT creates a new DHT object with the given peer as as the 'local' host
-func NewDHT(host p2p.Host) *DHT {
-	dht := &DHT {
+// NewChain creates a new Chain object
+func NewChain(host p2p.Host) *Chain {
+	c := &Chain {
 		host: host,
 	}
 
-	if err := host.SetStreamHandler(protocolDHT, dht.handleNewStream); err != nil {
+	if err := host.SetStreamHandler(protocolChain, c.handleNewStream); err != nil {
 		panic(err)
 	}
 
-	return dht
+	return c
 }
 
 // handleNewStream handles messages within the stream
-func (dht *DHT) handleNewStream(s p2p.Stream, msg proto.Message) {
+func (c *Chain) handleNewStream(s p2p.Stream, msg proto.Message) {
 	// check message type
 	switch message := msg.(type) {
 	case *pb.Message:
-		dht.handleMessage(s, message)
+		c.handleMessage(s, message)
 	default:
 		s.Reset()
 		glog.Errorf("unexpected message: %v", msg)
@@ -45,9 +45,9 @@ func (dht *DHT) handleNewStream(s p2p.Stream, msg proto.Message) {
 }
 
 // handleMessage handles messsage 
-func (dht *DHT) handleMessage(s p2p.Stream, msg *pb.Message) {
+func (c *Chain) handleMessage(s p2p.Stream, msg *pb.Message) {
 	// get handler
-	handler := dht.handlerForMsgType(msg.GetType())
+	handler := c.handlerForMsgType(msg.GetType())
 	if handler == nil {
 		s.Reset()
 		glog.Errorf("unknown message type: %v", msg.GetType())

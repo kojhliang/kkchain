@@ -104,7 +104,7 @@ func (n *Network) dispatchMessage(conn p2p.Conn, msg *protobuf.Message) error {
 	// handle message
 	stream := NewStream(conn, msg.Protocol)
 	handler(stream, ptr.Message)
-	// TODO: 
+	
 	return nil
 }
 

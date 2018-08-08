@@ -36,6 +36,11 @@ func NewConnection(conn net.Conn, n p2p.Network) *Connection {
 	}
 }
 
+// Close closes current connection
+func (c *Connection) Close() error {
+	return c.conn.Close()
+}
+
 // GetPeerID gets remote peer's ID
 func (c *Connection) GetPeerID() p2p.ID {
 	return c.remotePeer

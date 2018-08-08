@@ -45,13 +45,15 @@ message Record {
 }
 
 message Message {
-	enum MessageType {
+	enum Type {
 		PUT_VALUE = 0;
 		GET_VALUE = 1;
 		ADD_PROVIDER = 2;
 		GET_PROVIDERS = 3;
 		FIND_NODE = 4;
-		PING = 5;
+        FIND_NODE_RESULT = 5;
+        PING = 6;
+        PONG = 7;
 	}
 
 	enum ConnectionType {
@@ -81,10 +83,7 @@ message Message {
 	}
 
 	// defines what type of message it is.
-	MessageType type = 1;
-
-	// defines what coral cluster level this query/response belongs to.
-	int32 clusterLevelRaw = 10;
+	Type type = 1;
 
 	// Used to specify the key associated with this message.
 	// PUT_VALUE, GET_VALUE, ADD_PROVIDER, GET_PROVIDERS

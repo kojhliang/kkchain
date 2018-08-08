@@ -15,6 +15,9 @@ type Stream interface {
 
 	// return underlying connection
 	Conn() Conn
+
+	// reset stream
+	Reset() error
 }
 
 // StreamHandler is the type of function used to listen for
