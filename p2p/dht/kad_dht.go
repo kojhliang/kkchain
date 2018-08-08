@@ -3,13 +3,15 @@ package dht
 import (
 	"time"
 	"fmt"
-
+	"crypto/sha256"
+	"math/rand"
 )
 
 type DHT struct {
 	quitCh chan bool
 	table *RoutingTable
 	store *PeerStore
+	seedPeers []PeerID
 
 }
 
@@ -67,8 +69,20 @@ func (dht *DHT) AddPeer(peer PeerID)  {
 
 }
 
-func (dht *DHT) FindPeer(id []byte) {
+//FindTargetNeighbours searches target's neighbours from given PeerID
+func (dht *DHT) FindTargetNeighbours(target []byte, peer PeerID) {
 
+	//TODO:
+	//get peer stream
+
+	//send find neighbours request to peer
+}
+
+// RandomTargetID generate random peer id for query target
+func RandomTargetID() []byte{
+	id := make([]byte, 32)
+	rand.Read(id)
+	return sha256.New().Sum(id)
 }
 
 // SyncRouteTable sync route table.
@@ -76,6 +90,35 @@ func (dht *DHT) SyncRouteTable() {
 	fmt.Println("timer trigger")
 	fmt.Printf("table size: %d\n", len(dht.table.GetPeers()))
 	//TODO: sync peers
+
+	target := RandomTargetID()
+	syncedPeers := make(map[PeerID]bool)
+
+	// sync with seed nodes.
+	for _, pid := range dht.seedPeers {
+		dht.FindTargetNeighbours(target, pid)
+		syncedPeers[pid] = true
+	}
+
+	// random peer selection.
+	peers := dht.table.GetPeers()
+	peersCount := len(peers)
+	if peersCount <= 1 {
+		return
+	}
+
+	peersCountToSync := DefaultMaxPeersCountToSync
+	if peersCount < peersCountToSync {
+		peersCountToSync = peersCount
+	}
+
+	for i := 0; i < peersCountToSync; i++ {
+		pid := peers[i]
+		if syncedPeers[pid] == false {
+			dht.FindTargetNeighbours(target, pid)
+			syncedPeers[pid] = true
+		}
+	}
 
 }
 
