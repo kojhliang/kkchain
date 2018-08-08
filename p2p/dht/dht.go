@@ -17,12 +17,27 @@ const (
 type DHT struct {
 	// self
 	host p2p.Host
+
+	quitCh chan bool
+	table *RoutingTable
+	store *PeerStore
+	seedPeers []PeerID
 }
 
 // NewDHT creates a new DHT object with the given peer as as the 'local' host
-func NewDHT(host p2p.Host) *DHT {
+func NewDHT(host p2p.Host, dbPath string, self PeerID) *DHT {
+
+	// If no node database was given, use an in-memory one
+	db, err := newPeerStore(dbPath)
+	if err != nil {
+		return nil
+	}
+
 	dht := &DHT {
 		host: host,
+		quitCh: make(chan bool),
+		table: CreateRoutingTable(self),
+		store: db,
 	}
 
 	if err := host.SetStreamHandler(protocolDHT, dht.handleNewStream); err != nil {
@@ -31,6 +46,8 @@ func NewDHT(host p2p.Host) *DHT {
 
 	return dht
 }
+
+
 
 // handleNewStream handles messages within the stream
 func (dht *DHT) handleNewStream(s p2p.Stream, msg proto.Message) {
