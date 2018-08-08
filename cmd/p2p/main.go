@@ -9,6 +9,7 @@ import (
 
 	libcrypto "github.com/libp2p/go-libp2p-crypto"
 
+	"github.com/invin/kkchain/p2p/impl"
 )
 
 func main()  {
@@ -17,14 +18,14 @@ func main()  {
 	pbKey,_ := key.GetPublic().Bytes()
 	fmt.Printf("key: %v, len: %d\n", hex.EncodeToString(pbKey), len(pbKey))
 
-	peerA := dht.CreateID("111", pbKey)
+	peerA := dht.CreateID("/ip4/127.0.0.1/tcp/8860", pbKey)
 	fmt.Printf("peer A: %s\n", peerA.String())
 
-	kad := dht.NewDHT(nil,"", peerA)
+	kad := dht.NewDHT(impl.NewHost(peerA.ID),"", peerA)
 
 	key, _ = dht.GenerateKey(libcrypto.Secp256k1)
 	pbKey,_ = key.GetPublic().Bytes()
-	peerB := dht.CreateID("222", pbKey)
+	peerB := dht.CreateID("/ip4/127.0.0.1/tcp/8861", pbKey)
 	fmt.Printf("peer B: %s\n", peerB.String())
 
 	kad.AddPeer(peerB)
