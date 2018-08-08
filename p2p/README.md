@@ -1,7 +1,7 @@
 # P2P module
 P2P module implements the p2p communication of kkchain. 
 
-##Requirements
+## Requirements
 1. install protoc
 brew install protobuf@3.1
 
@@ -42,7 +42,7 @@ in different packages according to different purposes.
 Handshake messages are defined for handshaking. Ususally, a handshake message will be delivered once connection is established.
 
 ### DHT
-DHT messages are defined to discover and manage peers. Currently, we implemented a kademlia DHT
+DHT messages are defined to discover and manage peers. Currently, we implemented a kademlia DHT.
 
 ### Chain
 Chain messages are defined to fetch or broadcast chain related messages, such as block/tx messages.
