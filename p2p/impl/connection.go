@@ -23,16 +23,16 @@ var (
 // Connection represents a connection to remote peer
 type Connection struct {
 	conn net.Conn
-	p2p	p2p.P2P
+	n	p2p.Network
 	mux sync.Mutex
 	remotePeer p2p.ID
 }
 
 // NewConnection creates a new connection object
-func NewConnection(conn net.Conn, p2p p2p.P2P) *Connection {
+func NewConnection(conn net.Conn, n p2p.Network) *Connection {
 	return &Connection{
 		conn: conn,
-		p2p: p2p,
+		n: n,
 	}
 }
 
@@ -52,16 +52,14 @@ func (c *Connection) PrepareMessage(message proto.Message) (*protobuf.Message, e
 		return nil, err
 	}
 	// TODO: set localID
-	id := protobuf.ID(c.p2p.ID())
+	id := protobuf.ID(c.n.ID())
 
 	// TODO: 
-	// signature, err := n.keys.Sign(
-	// 	c.p2p.Conf().SignaturePolicy,
-	// 	c.p2p.Conf().HashPolicy,
-	// 	SerializeMessage(&id, raw.Value),
-	// )
+	signature, err := c.n.Sign(
+		SerializeMessage(&id, raw.Value),
+	)
 
-	var signature []byte
+	// var signature []byte
 
 	if err != nil {
 		return nil, err
@@ -166,8 +164,8 @@ func (c *Connection) ReadMessage() (*protobuf.Message, error) {
 
 	// Verify signature of the message
 	if !crypto.Verify(
-		c.p2p.Conf().SignaturePolicy,
-		c.p2p.Conf().HashPolicy,
+		c.n.Conf().SignaturePolicy,
+		c.n.Conf().HashPolicy,
 		msg.Sender.PublicKey,
 		SerializeMessage(msg.Sender, msg.Message.Value),
 		msg.Signature,

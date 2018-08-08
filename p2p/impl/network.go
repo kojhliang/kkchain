@@ -13,8 +13,8 @@ import (
 )
 
 
-// P2P represents the whole stack of p2p communication between peers
-type P2P struct {
+// Network represents the whole stack of p2p communication between peers
+type Network struct {
 	conf p2p.Config
 	host p2p.Host
 	id p2p.ID
@@ -22,12 +22,12 @@ type P2P struct {
 	keys *crypto.KeyPair
 }
 
-// New creates a new P2P instance with the specified configuration
-func New(address string, conf p2p.Config) *P2P {
+// New creates a new Network instance with the specified configuration
+func New(address string, conf p2p.Config) *Network {
 	keys := ed25519.RandomKeyPair()
 	id := p2p.CreateID(address, keys.PublicKey)
 
-	return &P2P{
+	return &Network{
 		conf: conf,
 		host: NewHost(address),
 		id: id,
@@ -36,31 +36,31 @@ func New(address string, conf p2p.Config) *P2P {
 }
 
 // ID returns the identify of the local peer
-func (p2p *P2P) ID() p2p.ID {
-	return p2p.id
+func (n *Network) ID() p2p.ID {
+	return n.id
 }
 
 // Start kicks off the p2p stack
-func (p2p *P2P) Start() error {
+func (n *Network) Start() error {
 	// TODO: 
 
 	return nil
 }
 
 // Conf gets configurations
-func (p2p *P2P) Conf() p2p.Config {
-	return p2p.conf
+func (n *Network) Conf() p2p.Config {
+	return n.conf
 }
 
 // Stop stops the p2p stack
-func (p2p *P2P) Stop() {
+func (n *Network) Stop() {
 	// TODO: 
 }
 
 // Accept connection
 // FIXME: reference implementation
-func (p2p *P2P) Accept(incoming net.Conn) {
-	conn := NewConnection(incoming, p2p)
+func (n *Network) Accept(incoming net.Conn) {
+	conn := NewConnection(incoming, n)
 
 	defer func() {
 		if incoming != nil {
@@ -75,7 +75,7 @@ func (p2p *P2P) Accept(incoming net.Conn) {
 			break
 		}
 
-		err = p2p.dispatchMessage(conn, msg)
+		err = n.dispatchMessage(conn, msg)
 
 		if err != nil {
 			glog.Error(err)
@@ -87,22 +87,33 @@ func (p2p *P2P) Accept(incoming net.Conn) {
 }
 
 // dispatch message according to protocol
-func (p2p *P2P) dispatchMessage(conn p2p.Conn, msg *protobuf.Message) error {
-	handler, err := p2p.host.GetStreamHandler(msg.Protocol)
+func (n *Network) dispatchMessage(conn p2p.Conn, msg *protobuf.Message) error {
+	// get stream handler
+	handler, err := n.host.GetStreamHandler(msg.Protocol)
 	if err != nil {
 		return err 
 	}
 
+	// unmarshal message
 	var ptr types.DynamicAny
 	if err = types.UnmarshalAny(msg.Message, &ptr); err != nil {
 		glog.Error(err)
 		return err
 	}
 	
+	// handle message
 	stream := NewStream(conn, msg.Protocol)
 	handler(stream, ptr.Message)
 	// TODO: 
 	return nil
 }
 
+// Sign signs a message
+func (n *Network) Sign(message []byte) ([]byte, error) {
+	return n.keys.Sign(n.conf.SignaturePolicy, n.conf.HashPolicy, message)
+}
 
+// Verify verifies the message
+func (n *Network) Verify(publicKey []byte, message []byte, signature []byte) bool {
+	return crypto.Verify(n.conf.SignaturePolicy, n.conf.HashPolicy, publicKey, message, signature)
+}
