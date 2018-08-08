@@ -30,6 +30,7 @@ message ID {
 }
 
 message Message {
+    // Protocol specific message
     google.protobuf.Any message = 1;
 
     // Sender's address and public key.

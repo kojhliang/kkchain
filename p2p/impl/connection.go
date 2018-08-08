@@ -9,7 +9,6 @@ import (
 
 	"github.com/invin/kkchain/p2p"
 	"github.com/invin/kkchain/p2p/protobuf"
-	"github.com/invin/kkchain/crypto"
 	"github.com/gogo/protobuf/proto"
 	"github.com/gogo/protobuf/types"
 	"github.com/pkg/errors"
@@ -24,15 +23,17 @@ var (
 type Connection struct {
 	conn net.Conn
 	n	p2p.Network
+	h	p2p.Host
 	mux sync.Mutex
 	remotePeer p2p.ID
 }
 
 // NewConnection creates a new connection object
-func NewConnection(conn net.Conn, n p2p.Network) *Connection {
+func NewConnection(conn net.Conn, n p2p.Network, h p2p.Host) *Connection {
 	return &Connection{
 		conn: conn,
 		n: n,
+		h: h,
 	}
 }
 
@@ -41,8 +42,8 @@ func (c *Connection) Close() error {
 	return c.conn.Close()
 }
 
-// GetPeerID gets remote peer's ID
-func (c *Connection) GetPeerID() p2p.ID {
+// RemotePeer gets remote peer's ID
+func (c *Connection) RemotePeer() p2p.ID {
 	return c.remotePeer
 }
 
@@ -57,7 +58,7 @@ func (c *Connection) PrepareMessage(message proto.Message) (*protobuf.Message, e
 		return nil, err
 	}
 	// TODO: set localID
-	id := protobuf.ID(c.n.ID())
+	id := protobuf.ID(c.h.ID())
 
 	// TODO: 
 	signature, err := c.n.Sign(
@@ -65,7 +66,6 @@ func (c *Connection) PrepareMessage(message proto.Message) (*protobuf.Message, e
 	)
 
 	// var signature []byte
-
 	if err != nil {
 		return nil, err
 	}
@@ -168,13 +168,7 @@ func (c *Connection) ReadMessage() (*protobuf.Message, error) {
 	}
 
 	// Verify signature of the message
-	if !crypto.Verify(
-		c.n.Conf().SignaturePolicy,
-		c.n.Conf().HashPolicy,
-		msg.Sender.PublicKey,
-		SerializeMessage(msg.Sender, msg.Message.Value),
-		msg.Signature,
-	) {
+	if !c.n.Verify(msg.Sender.PublicKey, SerializeMessage(msg.Sender, msg.Message.Value), msg.Signature) {
 		return nil, errVerifySign
 	}
 

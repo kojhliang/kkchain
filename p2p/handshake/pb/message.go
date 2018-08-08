@@ -11,7 +11,7 @@ func NewMessage(typ Message_Type) *Message {
 
 // BuildHandshake build message body for handshaking
 func BuildHandshake(msg *Message) {
-	msg.ProtocolVersion = "kkchain/p2p/1.0.0"
+	msg.ProtocolVersion = "handshake/1.0.0"
 	// TODO: 
 }
 // TODO: add other routines

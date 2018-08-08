@@ -38,9 +38,9 @@ func (s *Stream) Write(message proto.Message) error {
 	return s.conn.WriteMessage(signed)
 }
 
-// GetPeerID returns remote peer ID
-func (s *Stream) GetPeerID() p2p.ID {
-	return s.conn.GetPeerID()
+// RemotePeer returns remote peer ID
+func (s *Stream) RemotePeer() p2p.ID {
+	return s.conn.RemotePeer()
 }
 
 // Conn returns the connection to which stream attaches
@@ -52,6 +52,11 @@ func (s *Stream) Conn() p2p.Conn {
 // Reset resets current stream
 func (s *Stream) Reset() error {
 	return s.conn.Close()
+}
+
+// Protocol returns protocl of this stream
+func (s *Stream) Protocol() string {
+	return s.protocol
 }
 
 

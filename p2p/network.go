@@ -15,7 +15,6 @@ type Config struct {
 	HashPolicy crypto.HashPolicy	
 }
 
-
 // Network defines the interface for network communication
 type Network interface {
 	// Start kicks off the network stack
@@ -30,13 +29,10 @@ type Network interface {
 	// Accept connection
 	Accept(incoming net.Conn)
 
-	// returns ID of local peer
-	ID() ID
-
-	// sign message
+	// Sign message
 	Sign(message []byte) ([]byte, error)
 
-	// verify message
+	// Verify message
 	Verify(publicKey []byte, message []byte, signature []byte) bool
 	
 }
@@ -45,8 +41,16 @@ type Network interface {
 // messages
 type Conn interface {
 	io.Closer
+
+	// Read message 
 	ReadMessage()(*protobuf.Message, error)
+
+	// Write message
 	WriteMessage(*protobuf.Message) error
+
+	// Prepare message for further process
 	PrepareMessage(message proto.Message) (*protobuf.Message, error)
-	GetPeerID() ID
+
+	// Returns remote peer
+	RemotePeer() ID
 }

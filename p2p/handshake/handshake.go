@@ -57,7 +57,7 @@ func (hs *Handshake) handleMessage(s p2p.Stream, msg *pb.Message) {
 	// dispatch handler
 	// TODO: get context and peer id
 	ctx := context.Background()
-	pid := s.GetPeerID()
+	pid := s.RemotePeer()
 
 	rpmes, err := handler(ctx, pid, msg)
 

@@ -7,17 +7,20 @@ import (
 
 // Stream defines interface for reading and writing pb messages
 type Stream interface {
-	// write message
+	// Write message
 	Write(message proto.Message) error
 
-	// returns peer ID
-	GetPeerID() ID
+	// Returns remote peer ID
+	RemotePeer() ID
 
-	// return underlying connection
+	// Return underlying connection
 	Conn() Conn
 
-	// reset stream
+	// Reset stream
 	Reset() error
+
+	// Get protocol
+	Protocol() string
 }
 
 // StreamHandler is the type of function used to listen for
