@@ -1,9 +1,9 @@
-package discovery
+package dht
 
 import (
 	"time"
 	"fmt"
-	"github.com/invin/kkchain/p2p"
+
 )
 
 type DHT struct {
@@ -15,7 +15,7 @@ type DHT struct {
 
 func NewDHT(dbPath string, self PeerID) (*DHT, error) {
 	// If no node database was given, use an in-memory one
-	db, err := newPeerStore(dbPath, self)
+	db, err := newPeerStore(dbPath)
 	if err != nil {
 		return nil, err
 	}
@@ -40,10 +40,10 @@ func (dht *DHT) Stop() {
 func (dht *DHT) syncLoop()  {
 
 	//TODO: config timer
-	syncLoopTicker := time.NewTicker(p2p.DefaultSyncTableInterval)
+	syncLoopTicker := time.NewTicker(DefaultSyncTableInterval)
 	defer syncLoopTicker.Stop()
 
-	saveTableToStore := time.NewTicker(p2p.DefaultSaveTableInterval)
+	saveTableToStore := time.NewTicker(DefaultSaveTableInterval)
 	defer saveTableToStore.Stop()
 
 	for  {
@@ -67,15 +67,15 @@ func (dht *DHT) AddPeer(peer PeerID)  {
 
 }
 
-func (dht *DHT) FindPeer(id []byte)  {
+func (dht *DHT) FindPeer(id []byte) {
 
 }
 
 // SyncRouteTable sync route table.
-func (dht *DHT) SyncRouteTable()  {
+func (dht *DHT) SyncRouteTable() {
 	fmt.Println("timer trigger")
 	fmt.Printf("table size: %d\n", len(dht.table.GetPeers()))
-	//TODO: sync peer
+	//TODO: sync peers
 
 }
 
@@ -84,7 +84,7 @@ func (dht *DHT) saveTableToStore() {
 	peers := dht.table.GetPeers()
 	now := time.Now()
 	for _, v := range peers {
-		if  now.Sub(v.addTime) > p2p.DefaultSeedMinTableTime{
+		if  now.Sub(v.addTime) > DefaultSeedMinTableTime{
 			dht.store.Update(&v)
 		}
 	}

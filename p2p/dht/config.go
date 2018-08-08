@@ -1,12 +1,13 @@
-package p2p
+package dht
 
 import (
-	"github.com/invin/kkchain/p2p/discovery"
+
 	"time"
+
 )
 
 const (
-	DefaultSyncTableInterval = 30 * time.Second
+	DefaultSyncTableInterval = 10 * time.Second
 	DefaultSaveTableInterval = 2 * time.Minute
 	DefaultSeedMinTableTime  = 6 * time.Minute
 )
@@ -21,7 +22,7 @@ type Config struct {
 //DefaultConfig return default config.
 func DefaultConfig() *Config {
 	return &Config{
-		BucketSize : discovery.BucketSize,
+		BucketSize : BucketSize,
 		RoutingTableDir : "",
 		BootNodes: []string{},
 		PrivateKeyPath: "",
