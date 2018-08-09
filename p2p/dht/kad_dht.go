@@ -70,6 +70,13 @@ func (dht *DHT) AddPeer(peer PeerID)  {
 
 }
 
+func (dht *DHT) RemovePeer(peer PeerID)  {
+
+	dht.store.Delete(&peer)
+	dht.table.RemovePeer(peer)
+
+}
+
 //FindTargetNeighbours searches target's neighbours from given PeerID
 func (dht *DHT) FindTargetNeighbours(target []byte, peer PeerID) {
 
