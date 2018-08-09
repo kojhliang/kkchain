@@ -6,9 +6,9 @@ import (
 	"net"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/invin/kkchain/p2p/dht"
+	"github.com/meitu/go-ethereum/log"
 )
 
 type NodeDialer interface {
@@ -20,45 +20,42 @@ type TCPDialer struct {
 }
 
 func (t TCPDialer) Dial(dest *Node) (net.Conn, error) {
-	addr := &net.TCPAddr{IP: dest.IP, Port: int(dest.TCP)}
+	port, err := strconv.ParseInt(dest.TCPPort, 10, 10)
+	if err != nil {
+		return nil, err
+	}
+	addr := &net.TCPAddr{IP: net.ParseIP(dest.IP), Port: int(port)}
 	return t.Dialer.Dial("tcp", addr.String())
 }
 
 // dialstate schedules dials
 type dialstate struct {
-	dialing   map[dht.PeerID]connFlag
-	static    map[dht.PeerID]*dialTask
-	start     time.Time
+	dialing   map[dht.PeerID]*dialTask
+	task      map[dht.PeerID]*dialTask
 	bootnodes []*Node
 }
 
-type task interface {
-	Do(*Server)
-}
-
 type dialTask struct {
-	flags connFlag
-	dest  *Node
+	flag    connFlag
+	msgType MsgType
+	dest    *Node
 }
 
-func newDialState(static []*Node, bootnodes []*Node) *dialstate {
+func newDialState(bootnodes []*Node, msgType MsgType) *dialstate {
 	s := &dialstate{
-		static:    make(map[dht.PeerID]*dialTask),
+		task:      make(map[dht.PeerID]*dialTask),
 		bootnodes: make([]*Node, len(bootnodes)),
 	}
 	copy(s.bootnodes, bootnodes)
-	for _, n := range static {
-		s.addStatic(n)
+	for _, node := range bootnodes {
+		dialtask := &dialTask{
+			outboundConn,
+			msgType,
+			node,
+		}
+		s.task[node.ID] = dialtask
 	}
 	return s
-}
-
-func (s *dialstate) addStatic(n *Node) {
-	s.static[n.ID] = &dialTask{flags: staticDialedConn, dest: n}
-}
-
-func (s *dialstate) removeStatic(n *Node) {
-	delete(s.static, n.ID)
 }
 
 var (
@@ -69,19 +66,19 @@ var (
 	errNotWhitelisted   = errors.New("not contained in netrestrict whitelist")
 )
 
-func (s *dialstate) checkDial(n *Node, peers map[dht.PeerID]*Peer) error {
+func (s *dialstate) checkDial(n *Node) error {
 	_, dialing := s.dialing[n.ID]
 	switch {
 	case dialing:
 		return errAlreadyDialing
-	case peers[n.ID] != nil:
-		return errAlreadyConnected
+
+		// TODO: other case
 	}
 	return nil
 }
 
 func (t *dialTask) Do(srv *Server) {
-	if t.dest.IP == nil {
+	if t.dest.IP == "" {
 		if !t.resolve(srv) {
 			return
 		}
@@ -98,13 +95,10 @@ func (t *dialTask) resolve(srv *Server) bool {
 	if peer != nil {
 		addrStr := peer.RemoteAddr().String()
 		addrArr := strings.Split(addrStr, ":")
-		port, err := strconv.ParseUint(addrArr[1], 10, 16)
-		if err != nil {
-			log.Error("failed to parse string to uint:", err)
-		}
+
 		resolved = &Node{
-			net.ParseIP(addrArr[0]),
-			uint16(port),
+			addrArr[0],
+			addrArr[1],
 			peer.ID,
 		}
 	}
@@ -113,13 +107,13 @@ func (t *dialTask) resolve(srv *Server) bool {
 }
 
 func (t *dialTask) dial(srv *Server, dest *Node) error {
-	fd, err := srv.Dialer.Dial(dest)
+	fd, err := srv.dialer.Dial(dest)
 	if err != nil {
 		return err
 	}
-	return srv.SetupConn(fd, t.flags, dest)
+	return srv.SetupConn(fd, t.flag, t.msgType, dest)
 }
 
 func (t *dialTask) String() string {
-	return fmt.Sprintf("%v %x %v:%d", t.flags, t.dest.ID.ID.PublicKey[:8], t.dest.IP, t.dest.TCP)
+	return fmt.Sprintf("%v %x %v:%d", t.flag, t.dest.ID.ID.PublicKey[:8], t.dest.IP, t.dest.TCPPort)
 }

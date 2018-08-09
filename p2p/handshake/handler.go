@@ -1,9 +1,10 @@
-package handshake 
+package handshake
 
 import (
 	"context"
-	"github.com/invin/kkchain/p2p/handshake/pb"
+
 	"github.com/invin/kkchain/p2p"
+	"github.com/invin/kkchain/p2p/handshake/pb"
 )
 
 // handshakeHandler specifies the signature of functions that handle DHT messages.
@@ -43,14 +44,14 @@ func (hs *Handshake) handleHello(ctx context.Context, p p2p.ID, pmes *pb.Message
 
 func (hs *Handshake) handleHelloOK(ctx context.Context, p p2p.ID, pmes *pb.Message) (_ *pb.Message, err error) {
 
-	// TODO: handle received handshake info 
+	// TODO: handle received handshake info
 
 	return nil, nil
 }
 
 func (hs *Handshake) handleHelloError(ctx context.Context, p p2p.ID, pmes *pb.Message) (_ *pb.Message, err error) {
 
-	// TODO: handle error 
+	// TODO: handle error
 
 	return nil, nil
 }

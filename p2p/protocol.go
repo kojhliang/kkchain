@@ -3,7 +3,7 @@ package p2p
 type MsgType int
 
 const (
-	msg_dht MsgType = 1
+	msg_dht MsgType = iota
 	msg_handshake
 	msg_chain
 )

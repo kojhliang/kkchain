@@ -8,22 +8,29 @@ import (
 
 	"encoding/hex"
 
+	"strconv"
+
 	"github.com/invin/kkchain/p2p/dht"
 	"github.com/invin/kkchain/p2p/impl"
 )
 
 type Node struct {
-	IP  net.IP
-	TCP uint16
-	ID  dht.PeerID
+	IP      string
+	TCPPort string
+	ID      dht.PeerID
 }
 
 func (n *Node) String() string {
 	u := url.URL{Scheme: "enode"}
-	if n.IP == nil {
-		u.Host = fmt.Sprintf("%x", n.ID[:])
+	if n.IP == "" {
+		u.Host = fmt.Sprintf("%x", n.ID.PublicKey[:])
 	} else {
-		addr := net.TCPAddr{IP: n.IP, Port: int(n.TCP)}
+		port, err := strconv.ParseInt(n.TCPPort, 10, 10)
+		if err != nil {
+			log.Error("failed to parse port:", err)
+			port = 0
+		}
+		addr := net.TCPAddr{IP: net.ParseIP(n.IP), Port: int(port)}
 		u.User = url.User(hex.EncodeToString(n.ID.PublicKey))
 		u.Host = addr.String()
 	}
