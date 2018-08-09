@@ -4,9 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"time"
-	"strings"
 	"strconv"
+	"strings"
+	"time"
+
+	"github.com/invin/kkchain/p2p/dht"
 )
 
 type NodeDialer interface {
@@ -24,8 +26,8 @@ func (t TCPDialer) Dial(dest *Node) (net.Conn, error) {
 
 // dialstate schedules dials
 type dialstate struct {
-	dialing   map[NodeID]connFlag
-	static    map[NodeID]*dialTask
+	dialing   map[dht.PeerID]connFlag
+	static    map[dht.PeerID]*dialTask
 	start     time.Time
 	bootnodes []*Node
 }
@@ -41,7 +43,7 @@ type dialTask struct {
 
 func newDialState(static []*Node, bootnodes []*Node) *dialstate {
 	s := &dialstate{
-		static:    make(map[NodeID]*dialTask),
+		static:    make(map[dht.PeerID]*dialTask),
 		bootnodes: make([]*Node, len(bootnodes)),
 	}
 	copy(s.bootnodes, bootnodes)
@@ -67,7 +69,7 @@ var (
 	errNotWhitelisted   = errors.New("not contained in netrestrict whitelist")
 )
 
-func (s *dialstate) checkDial(n *Node, peers map[NodeID]*Peer) error {
+func (s *dialstate) checkDial(n *Node, peers map[dht.PeerID]*Peer) error {
 	_, dialing := s.dialing[n.ID]
 	switch {
 	case dialing:
@@ -92,7 +94,7 @@ func (t *dialTask) Do(srv *Server) {
 
 func (t *dialTask) resolve(srv *Server) bool {
 	var resolved *Node
-	peer := srv.peers[t.dest.ID]
+	peer := srv.peers[t.dest.ID.ID]
 	if peer != nil {
 		addrStr := peer.RemoteAddr().String()
 		addrArr := strings.Split(addrStr, ":")
@@ -103,7 +105,7 @@ func (t *dialTask) resolve(srv *Server) bool {
 		resolved = &Node{
 			net.ParseIP(addrArr[0]),
 			uint16(port),
-			peer.ID(),
+			peer.ID,
 		}
 	}
 	t.dest = resolved
@@ -119,5 +121,5 @@ func (t *dialTask) dial(srv *Server, dest *Node) error {
 }
 
 func (t *dialTask) String() string {
-	return fmt.Sprintf("%v %x %v:%d", t.flags, t.dest.ID[:8], t.dest.IP, t.dest.TCP)
+	return fmt.Sprintf("%v %x %v:%d", t.flags, t.dest.ID.ID.PublicKey[:8], t.dest.IP, t.dest.TCP)
 }

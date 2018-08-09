@@ -1,18 +1,18 @@
 package impl
 
 import (
+	"bufio"
+	"encoding/binary"
+	"io"
 	"net"
 	"sync"
-	"io"
-	"encoding/binary"
-	"bufio"
 
-	"github.com/invin/kkchain/p2p"
-	"github.com/invin/kkchain/p2p/protobuf"
 	"github.com/gogo/protobuf/proto"
 	"github.com/gogo/protobuf/types"
-	"github.com/pkg/errors"
 	"github.com/golang/glog"
+	"github.com/invin/kkchain/p2p"
+	"github.com/invin/kkchain/p2p/protobuf"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -21,10 +21,10 @@ var (
 
 // Connection represents a connection to remote peer
 type Connection struct {
-	conn net.Conn
-	n	p2p.Network
-	h	p2p.Host
-	mux sync.Mutex
+	conn       net.Conn
+	n          p2p.Network
+	h          p2p.Host
+	mux        sync.Mutex
 	remotePeer p2p.ID
 }
 
@@ -32,9 +32,17 @@ type Connection struct {
 func NewConnection(conn net.Conn, n p2p.Network, h p2p.Host) *Connection {
 	return &Connection{
 		conn: conn,
-		n: n,
-		h: h,
+		n:    n,
+		h:    h,
 	}
+}
+
+func (c *Connection) RemoteAddr() net.Addr {
+	return c.conn.RemoteAddr()
+}
+
+func (c *Connection) LocalAddr() net.Addr {
+	return c.conn.LocalAddr()
 }
 
 // Close closes current connection
@@ -60,7 +68,7 @@ func (c *Connection) PrepareMessage(message proto.Message) (*protobuf.Message, e
 	// TODO: set localID
 	id := protobuf.ID(c.h.ID())
 
-	// TODO: 
+	// TODO:
 	signature, err := c.n.Sign(
 		SerializeMessage(&id, raw.Value),
 	)
@@ -75,7 +83,7 @@ func (c *Connection) PrepareMessage(message proto.Message) (*protobuf.Message, e
 		Sender:    &id,
 		Signature: signature,
 	}
-	
+
 	return msg, nil
 }
 
@@ -111,7 +119,7 @@ func (c *Connection) write(w io.Writer, message *protobuf.Message, mux *sync.Mut
 
 	// Loop to write the entire buffer
 	bytesWritten, totalBytesWritten := 0, 0
-	
+
 	for totalBytesWritten < totalSize {
 		bytesWritten, err = w.Write(buffer[totalBytesWritten:])
 		if err != nil {
@@ -146,7 +154,7 @@ func (c *Connection) ReadMessage() (*protobuf.Message, error) {
 	}
 
 	// Message size is limited to 4MB
-	if msgLen > (4*1024*1024) {
+	if msgLen > (4 * 1024 * 1024) {
 		return nil, errors.Errorf("message length exceeds the max size")
 	}
 

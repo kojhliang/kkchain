@@ -1,15 +1,21 @@
 package p2p
 
 import (
-	"crypto/ecdsa"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"sync"
 	"time"
-	"bufio"
-	"encoding/json"
-	"io"
+
+	"encoding/hex"
+
+	"github.com/golang/protobuf/proto"
+	"github.com/invin/kkchain/p2p/dht"
+	"github.com/invin/kkchain/p2p/impl"
+	"github.com/invin/kkchain/p2p/protobuf"
+	"github.com/libp2p/go-libp2p-crypto"
 	"github.com/sirupsen/logrus"
 )
 
@@ -23,8 +29,8 @@ var (
 	log              = logrus.New()
 )
 
-type Config struct {
-	PrivateKey      *ecdsa.PrivateKey
+type ServerConfig struct {
+	PrivateKey      crypto.PrivKey
 	MaxPeers        int
 	MaxPendingPeers int
 	BootstrapNodes  []*Node
@@ -35,10 +41,10 @@ type Config struct {
 
 // Server manages all peer connections.
 type Server struct {
-	Config
+	ServerConfig
 	SendMsg      map[string]interface{}
 	RecvMsg      map[string]interface{}
-	peers        map[NodeID]*Peer
+	peers        map[ID]*Peer
 	lock         sync.Mutex
 	running      bool
 	listener     net.Listener
@@ -60,10 +66,10 @@ const (
 
 // peer connection info
 type conn struct {
-	fd      net.Conn
+	conn    impl.Connection
 	flags   connFlag
 	connErr chan error
-	id      NodeID
+	id      dht.PeerID
 }
 
 func (c *conn) isThisFlag(f connFlag) bool {
@@ -94,12 +100,17 @@ func (srv *Server) Self() *Node {
 }
 
 func (srv *Server) makeSelf(listener net.Listener) *Node {
+	pubkey, err := srv.PrivateKey.GetPublic().Bytes()
+	if err != nil {
+		log.Error("failed to get server's pubkey:", err)
+		return nil
+	}
 	if listener == nil {
-		return &Node{IP: net.ParseIP("0.0.0.0"), ID: PubkeyID(&srv.PrivateKey.PublicKey)}
+		return &Node{IP: net.ParseIP("0.0.0.0"), ID: dht.CreateID("0.0.0.0", pubkey)}
 	}
 	addr := listener.Addr().(*net.TCPAddr)
 	return &Node{
-		ID:  PubkeyID(&srv.PrivateKey.PublicKey),
+		ID:  dht.CreateID(addr.String(), pubkey),
 		IP:  addr.IP,
 		TCP: uint16(addr.Port),
 	}
@@ -208,16 +219,19 @@ running:
 			// TODO:
 
 		case c := <-srv.addpeer:
-			p := newPeer(c)
+			p := newPeer(&c.conn)
 			log.WithFields(logrus.Fields{
-				"remote_addr": c.fd.RemoteAddr().String(),
-				"nodeID":      p.ID().String(),
+				"remote_addr": c.conn.RemoteAddr().String(),
+				"nodeID":      hex.EncodeToString(p.ID.PublicKey),
 			}).Info("add p2p peer")
 
 			// TODO:run peer protocols
 
-		case pd := <-srv.delpeer:
-			log.Debug("remove p2p peer:", pd.connErr)
+		case c := <-srv.delpeer:
+			log.WithFields(logrus.Fields{
+				"remote_addr": c.conn.RemoteAddr().String(),
+				"nodeID":      hex.EncodeToString(c.conn.RemotePeer().PublicKey),
+			}).Debug("remove p2p peer:")
 			// TODO:
 		}
 	}
@@ -229,7 +243,7 @@ running:
 
 	for len(srv.peers) > 0 {
 		p := <-srv.delpeer
-		delete(srv.peers, p.id)
+		delete(srv.peers, p.conn.RemotePeer())
 	}
 }
 
@@ -250,32 +264,6 @@ func (srv *Server) listenLoop() {
 			}
 			break
 		}
-
-		rw := bufio.NewReadWriter(bufio.NewReader(fd), bufio.NewWriter(fd))
-		readBytes, err := rw.ReadBytes('\n')
-		if err != io.EOF {
-			log.Error("failed to read from new conn:", err)
-		}
-		err = json.Unmarshal(readBytes, &srv.RecvMsg)
-		if err != nil {
-			log.Error(err)
-		}
-
-		nodeIDBytes, err := json.Marshal(srv.RecvMsg["NodeID"])
-		if err != nil {
-			log.Error(err)
-		}
-
-		var nodeID NodeID
-		err = json.Unmarshal(nodeIDBytes, &nodeID)
-		if err != nil {
-			log.Error(err)
-		}
-		log.WithFields(logrus.Fields{
-			"remote_addr": fd.RemoteAddr().String(),
-			"nodeID":      nodeID.String(),
-		}).Info("accepted a new inbound connection")
-
 		go func() {
 			srv.SetupConn(fd, inboundConn, nil)
 		}()
@@ -288,7 +276,19 @@ func (srv *Server) SetupConn(fd net.Conn, flags connFlag, dialDest *Node) error 
 	if self == nil {
 		return errors.New("shutdown")
 	}
-	c := &conn{fd: fd, flags: flags, connErr: make(chan error)}
+
+	implConn := impl.Connection{
+		fd,
+		nil,
+		nil,
+		nil,
+		nil,
+	}
+	c := &conn{
+		conn:    implConn,
+		flags:   flags,
+		connErr: make(chan error),
+	}
 	err := srv.setupConn(c, dialDest)
 	if err != nil {
 		c.connErr <- err
@@ -309,13 +309,17 @@ func (srv *Server) setupConn(c *conn, dialDest *Node) error {
 		return errServerStopped
 	}
 
-	rw := bufio.NewReadWriter(bufio.NewReader(c.fd), bufio.NewWriter(c.fd))
 	if c.isThisFlag(inboundConn) {
 
-		// inbound conn , should recv nodeID
-		readBytes, err := rw.ReadBytes('\n')
+		// inbound conn , should recv peerID
+		msg, err := c.conn.ReadMessage()
 		if err != io.EOF {
 			log.Error("failed to read data from setupConn:", err)
+			return err
+		}
+		readBytes, err := proto.Marshal(msg)
+		if err != nil {
+			log.Error("failed to marshal protocol msg:", err)
 			return err
 		}
 		err = json.Unmarshal(readBytes, &srv.RecvMsg)
@@ -323,29 +327,32 @@ func (srv *Server) setupConn(c *conn, dialDest *Node) error {
 			log.Error("failed to ummarshal bytes:", err)
 			return err
 		}
-
-		nodeIDBytes, err := json.Marshal(srv.RecvMsg["NodeID"])
+		nodeIDBytes, err := json.Marshal(srv.RecvMsg["PeerID"])
 		if err != nil {
 			return err
 		}
-
 		err = json.Unmarshal(nodeIDBytes, &c.id)
 		if err != nil {
 			return err
 		}
 	} else {
 
-		// dial node , should send self nodeID
-		srv.SendMsg["NodeID"] = srv.Self().ID
-		sendBytes, err := json.Marshal(srv.SendMsg)
+		// dial node , should send self peerID
+		srv.SendMsg["PeerID"] = srv.Self().ID
+		_, err := json.Marshal(srv.SendMsg)
 		if err != nil {
 			return err
 		}
-		rw.Write(sendBytes)
-		rw.Flush()
+
+		// TODO:from data to protobuf msg
+		msg := &protobuf.Message{}
+		err = c.conn.WriteMessage(msg)
+		if err != nil {
+			return err
+		}
 	}
 
-	if dialDest != nil && c.id != dialDest.ID {
+	if dialDest != nil && c.id.Equals(dialDest.ID) {
 		log.WithFields(logrus.Fields{
 			"expected_id": c.id,
 			"want_id":     dialDest.ID,
@@ -357,7 +364,7 @@ func (srv *Server) setupConn(c *conn, dialDest *Node) error {
 	srv.addpeer <- c
 	log.WithFields(logrus.Fields{
 		"id":   c.id,
-		"addr": c.fd.RemoteAddr(),
+		"addr": c.conn.RemoteAddr(),
 		"conn": c.flags,
 	}).Info("connection set up", "inbound", dialDest == nil)
 	return nil
