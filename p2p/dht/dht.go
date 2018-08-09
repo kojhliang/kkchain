@@ -7,6 +7,8 @@ import (
 	"github.com/invin/kkchain/p2p/dht/pb"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/glog"
+	"github.com/libp2p/go-libp2p-crypto"
+	"github.com/invin/kkchain/p2p/impl"
 )
 
 const (
@@ -18,36 +20,69 @@ type DHT struct {
 	// self
 	host p2p.Host
 
-	quitCh chan bool
-	table *RoutingTable
-	store *PeerStore
-	seedPeers []PeerID
+	quitCh	chan bool
+	table	*RoutingTable
+	store	*PeerStore
+	config	*Config
+	self	PeerID
+	selfPrivateKey	crypto.PrivKey
 }
 
 // NewDHT creates a new DHT object with the given peer as as the 'local' host
-func NewDHT(host p2p.Host, dbPath string, self PeerID) *DHT {
+func NewDHT(config *Config) *DHT {
 
 	// If no node database was given, use an in-memory one
-	db, err := newPeerStore(dbPath)
+	db, err := newPeerStore(config.RoutingTableDir)
+	if err != nil {
+		return nil
+	}
+
+	self, privateKey, err := selfPeerID(config)
 	if err != nil {
 		return nil
 	}
 
 	dht := &DHT {
-		host: host,
 		quitCh: make(chan bool),
-		table: CreateRoutingTable(self),
+		config: config,
+		selfPrivateKey: privateKey,
+		self: *self,
+		table: CreateRoutingTable(*self),
 		store: db,
 	}
 
-	if err := host.SetStreamHandler(protocolDHT, dht.handleNewStream); err != nil {
+	initNetwork(config, dht)
+
+	if err := dht.host.SetStreamHandler(protocolDHT, dht.handleNewStream); err != nil {
 		panic(err)
 	}
 
 	return dht
 }
 
+//initNetwork init network and related config before startup
+func initNetwork(config *Config, dht *DHT)  {
+	//TODO: new server & and set to dht
 
+	dht.host = impl.NewHost(dht.self.ID)
+}
+
+// selfPeerID get local peer info
+func selfPeerID(config *Config) (*PeerID, crypto.PrivKey, error){
+
+	peerKey, err := LoadNetworkKeyFromFileOrCreateNew(config.PrivateKeyPath)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	pubk, err:= peerKey.GetPublic().Bytes()
+	if err != nil{
+		return nil, nil, err
+	}
+	id := CreateID(config.localhost, pubk)
+
+	return &id, peerKey, nil
+}
 
 // handleNewStream handles messages within the stream
 func (dht *DHT) handleNewStream(s p2p.Stream, msg proto.Message) {

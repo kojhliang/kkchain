@@ -16,8 +16,9 @@ const (
 type Config struct {
 	BucketSize           int
 	RoutingTableDir      string
-	BootNodes            []string
+	BootNodes            []peeraddr
 	PrivateKeyPath       string
+	localhost	string
 }
 
 //DefaultConfig return default config.
@@ -27,5 +28,6 @@ func DefaultConfig() *Config {
 		RoutingTableDir : "",
 		BootNodes: []string{},
 		PrivateKeyPath: "",
+		localhost: "/ip4/0.0.0.0/tcp/8860",
 	}
 }

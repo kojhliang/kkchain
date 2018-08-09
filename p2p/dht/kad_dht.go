@@ -90,14 +90,18 @@ func RandomTargetID() []byte{
 func (dht *DHT) SyncRouteTable() {
 	fmt.Println("timer trigger")
 	fmt.Printf("table size: %d\n", len(dht.table.GetPeers()))
-	//TODO: sync peers
 
 	target := RandomTargetID()
 	syncedPeers := make(map[string]bool)
 
 	// sync with seed nodes.
-	for _, pid := range dht.seedPeers {
-		dht.FindTargetNeighbours(target, pid)
+	for _, addr := range dht.config.BootNodes {
+		pid, err := ParsePeerAddr(addr)
+		if err != nil {
+			continue
+		}
+
+		dht.FindTargetNeighbours(target, *pid)
 		syncedPeers[hex.EncodeToString(pid.Hash)] = true
 	}
 
