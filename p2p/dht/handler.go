@@ -2,6 +2,7 @@ package dht
 
 import (
 	"context"
+	"encoding/hex"
 	"github.com/invin/kkchain/p2p"
 	"github.com/invin/kkchain/p2p/dht/pb"
 )
@@ -42,6 +43,18 @@ func (dht *DHT) handleFindPeer(ctx context.Context, p p2p.ID, pmes *pb.Message) 
 	// setup response
 	resp := pb.NewMessage(pb.Message_FIND_NODE_RESULT, "")
 	resp.CloserPeers = pb.FindCloserPeers(p)
+
+	target, err := hex.DecodeString(pmes.Key)
+	if err != nil {
+		return nil, err
+	}
+
+	peer := PeerID{Hash: target}
+	closest := dht.table.FindClosestPeers(peer, BucketSize)
+
+	for _, p := range closest {
+		resp.CloserPeers = append(resp.CloserPeers, &pb.Message_Peer{Id: p.ID.PublicKeyHex()})
+	}
 
 	return resp, nil
 }

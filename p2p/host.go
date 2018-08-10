@@ -6,15 +6,21 @@ type ConnManager interface {
 	AddConnection(id ID, conn Conn) error
 
 	// Get a connection with ID
-	GetConnection(id ID)(Conn, error)
+	GetConnection(id ID) (Conn, error)
+
+	// Get all connection
+	GetAllConnection() map[string]Conn
 
 	// Remove a connection
 	RemoveConnection(id ID) error
+
+	// Remove all connection
+	RemoveAllConnection()
 }
 
 // Host defines a host for connections
 type Host interface {
-	ConnManager	
+	ConnManager
 
 	// Returns ID of local peer
 	ID() ID

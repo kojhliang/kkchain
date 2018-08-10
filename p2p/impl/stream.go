@@ -1,27 +1,27 @@
-package impl 
+package impl
 
 import (
-	"github.com/invin/kkchain/p2p"
 	"github.com/gogo/protobuf/proto"
+	"github.com/invin/kkchain/p2p"
 	"github.com/pkg/errors"
 )
 
 var (
-	errEmptyMsg			= errors.New("received an empty message from peer")
-	errInvalidMessage	= errors.New("invalid message")
-	errVerifySign		= errors.New("invalid signature")
+	errEmptyMsg       = errors.New("received an empty message from peer")
+	errInvalidMessage = errors.New("invalid message")
+	errVerifySign     = errors.New("invalid signature")
 )
 
-// Stream implements the Stream interface and provides basic routiens 
+// Stream implements the Stream interface and provides basic routiens
 // for sending and writing pb messages
 type Stream struct {
-	conn p2p.Conn
+	conn     p2p.Conn
 	protocol string
 }
 
 // NewStream creates a new stream
 func NewStream(conn p2p.Conn, protocol string) *Stream {
-	return &Stream{ conn, protocol}
+	return &Stream{conn, protocol}
 }
 
 // Write wraps a pb message and send it
@@ -48,7 +48,6 @@ func (s *Stream) Conn() p2p.Conn {
 	return s.conn
 }
 
-
 // Reset resets current stream
 func (s *Stream) Reset() error {
 	return s.conn.Close()
@@ -58,8 +57,3 @@ func (s *Stream) Reset() error {
 func (s *Stream) Protocol() string {
 	return s.protocol
 }
-
-
-
-
-

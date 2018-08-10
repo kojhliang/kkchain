@@ -4,6 +4,8 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"github.com/invin/kkchain/p2p/dht/pb"
+	"github.com/invin/kkchain/p2p/impl"
 	"math/rand"
 	"time"
 )
@@ -99,6 +101,7 @@ func (dht *DHT) FindTargetNeighbours(target []byte, peer PeerID) {
 		return
 	}
 
+	//TODO: dial remote peer???
 	if conn == nil {
 		err = dht.host.Connect(peer.ID.Address)
 		if err != nil {
@@ -107,8 +110,12 @@ func (dht *DHT) FindTargetNeighbours(target []byte, peer PeerID) {
 	}
 
 	//send find neighbours request to peer
-	//pmes := pb.NewMessage(pb.Message_FIND_NODE, string(target))
-	//conn.WriteMessage(pmes)
+	stream := impl.NewStream(conn, protocolDHT)
+	pmes := pb.NewMessage(pb.Message_FIND_NODE, hex.EncodeToString(target))
+
+	smes, err := conn.PrepareMessage(pmes)
+	stream.Conn().WriteMessage(smes)
+
 }
 
 // RandomTargetID generate random peer id for query target
