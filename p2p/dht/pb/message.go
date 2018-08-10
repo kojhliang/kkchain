@@ -5,9 +5,10 @@ import (
 )
 
 // NewMessage creates a new message object
-func NewMessage(typ Message_Type) *Message {
+func NewMessage(typ Message_Type, key string) *Message {
 	m := &Message{
 		Type: typ,
+		Key: key,
 	}
 
 	return m

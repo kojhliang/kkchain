@@ -1,18 +1,19 @@
 package dht
 
 import (
-	"fmt"
 	"bytes"
-	"encoding/hex"
-	"math/bits"
 	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"math/bits"
 	"time"
+
 	"github.com/invin/kkchain/p2p"
 )
 
 type PeerID struct {
 	p2p.ID
-	Hash []byte
+	Hash    []byte
 	addTime time.Time
 }
 
@@ -20,7 +21,7 @@ type PeerID struct {
 func CreateID(address string, publicKey []byte) PeerID {
 	id := GetIDFromPublicKey(publicKey)
 
-	return PeerID{ID: p2p.CreateID(address, publicKey),Hash: id}
+	return PeerID{ID: p2p.CreateID(address, publicKey), Hash: id}
 }
 
 // String returns the identity address and public key.

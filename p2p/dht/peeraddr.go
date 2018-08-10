@@ -1,16 +1,16 @@
 package dht
 
 import (
-	"strings"
-	"errors"
 	"encoding/hex"
+	"errors"
+	"strings"
 )
 
 type peeraddr = string
 
-var(
-	errStrAddressEmpty = errors.New("address was empty")
-	errStrInvalidAddress       = errors.New("invalid address")
+var (
+	errStrAddressEmpty   = errors.New("address was empty")
+	errStrInvalidAddress = errors.New("invalid address")
 )
 
 func ParsePeerAddr(addr peeraddr) (*PeerID, error) {
@@ -27,7 +27,7 @@ func ParsePeerAddr(addr peeraddr) (*PeerID, error) {
 
 	pubk := subAddrs[0]
 	url := subAddrs[1]
-	pbPubk, err:= hex.DecodeString(pubk)
+	pbPubk, err := hex.DecodeString(pubk)
 	if err != nil {
 		return nil, err
 	}
@@ -42,4 +42,3 @@ func FormatPeerAddr(id PeerID) peeraddr {
 	subAddrs := []string{id.PublicKeyHex(), id.ID.Address}
 	return strings.Join(subAddrs, "@")
 }
-

@@ -1,11 +1,11 @@
 package dht
 
 import (
-	"time"
-	"fmt"
 	"crypto/sha256"
-	"math/rand"
 	"encoding/hex"
+	"fmt"
+	"math/rand"
+	"time"
 )
 
 //type DHT struct {
@@ -33,6 +33,7 @@ import (
 func (dht *DHT) Start() {
 	fmt.Println("start sync loop.....")
 	go dht.syncLoop()
+	go dht.waitReceive()
 }
 
 func (dht *DHT) Stop() {
@@ -40,7 +41,7 @@ func (dht *DHT) Stop() {
 	dht.quitCh <- true
 }
 
-func (dht *DHT) syncLoop()  {
+func (dht *DHT) syncLoop() {
 
 	//TODO: config timer
 	syncLoopTicker := time.NewTicker(DefaultSyncTableInterval)
@@ -49,28 +50,37 @@ func (dht *DHT) syncLoop()  {
 	saveTableToStore := time.NewTicker(DefaultSaveTableInterval)
 	defer saveTableToStore.Stop()
 
-	for  {
+	for {
 		select {
-		case <- dht.quitCh:
+		case <-dht.quitCh:
 			fmt.Println("stopped sync loop")
 			return
-		case <- syncLoopTicker.C:
+		case <-syncLoopTicker.C:
 			dht.SyncRouteTable()
-		case <- saveTableToStore.C:
+		case <-saveTableToStore.C:
 			dht.saveTableToStore()
 		}
 	}
 }
 
-func (dht *DHT) AddPeer(peer PeerID)  {
+func (dht *DHT) waitReceive() {
+	for {
+		select {
+		case msg := <-dht.recvCh:
+			fmt.Println(msg)
+		}
+	}
+}
 
-	dht.store.Update(&peer)
+func (dht *DHT) AddPeer(peer PeerID) {
+
+	//dht.store.Update(&peer)
 	peer.addTime = time.Now()
 	dht.table.Update(peer)
 
 }
 
-func (dht *DHT) RemovePeer(peer PeerID)  {
+func (dht *DHT) RemovePeer(peer PeerID) {
 
 	dht.store.Delete(&peer)
 	dht.table.RemovePeer(peer)
@@ -80,14 +90,29 @@ func (dht *DHT) RemovePeer(peer PeerID)  {
 //FindTargetNeighbours searches target's neighbours from given PeerID
 func (dht *DHT) FindTargetNeighbours(target []byte, peer PeerID) {
 
-	//TODO:
-	//get peer stream
+	if peer.Equals(dht.self) {
+		return
+	}
+
+	conn, err := dht.host.GetConnection(peer.ID)
+	if err != nil {
+		return
+	}
+
+	if conn == nil {
+		err = dht.host.Connect(peer.ID.Address)
+		if err != nil {
+			return
+		}
+	}
 
 	//send find neighbours request to peer
+	//pmes := pb.NewMessage(pb.Message_FIND_NODE, string(target))
+	//conn.WriteMessage(pmes)
 }
 
 // RandomTargetID generate random peer id for query target
-func RandomTargetID() []byte{
+func RandomTargetID() []byte {
 	id := make([]byte, 32)
 	rand.Read(id)
 	return sha256.New().Sum(id)
@@ -102,7 +127,7 @@ func (dht *DHT) SyncRouteTable() {
 	syncedPeers := make(map[string]bool)
 
 	// sync with seed nodes.
-	for _, addr := range dht.config.BootNodes {
+	for _, addr := range dht.config.BootstrapNodes {
 		pid, err := ParsePeerAddr(addr)
 		if err != nil {
 			continue
@@ -131,7 +156,6 @@ func (dht *DHT) SyncRouteTable() {
 			syncedPeers[hex.EncodeToString(pid.Hash)] = true
 		}
 	}
-
 }
 
 // saveTableToStore save peer to db
@@ -139,7 +163,7 @@ func (dht *DHT) saveTableToStore() {
 	peers := dht.table.GetPeers()
 	now := time.Now()
 	for _, v := range peers {
-		if  now.Sub(v.addTime) > DefaultSeedMinTableTime{
+		if now.Sub(v.addTime) > DefaultSeedMinTableTime {
 			dht.store.Update(&v)
 		}
 	}

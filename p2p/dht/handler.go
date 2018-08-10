@@ -2,8 +2,8 @@ package dht
 
 import (
 	"context"
-	"github.com/invin/kkchain/p2p/dht/pb"
 	"github.com/invin/kkchain/p2p"
+	"github.com/invin/kkchain/p2p/dht/pb"
 )
 
 // dhthandler specifies the signature of functions that handle DHT messages.
@@ -40,7 +40,7 @@ func (dht *DHT) handlePutValue(ctx context.Context, p p2p.ID, pmes *pb.Message) 
 
 func (dht *DHT) handleFindPeer(ctx context.Context, p p2p.ID, pmes *pb.Message) (_ *pb.Message, err error) {
 	// setup response
-	resp := pb.NewMessage(pb.Message_FIND_NODE_RESULT)
+	resp := pb.NewMessage(pb.Message_FIND_NODE_RESULT, "")
 	resp.CloserPeers = pb.FindCloserPeers(p)
 
 	return resp, nil
@@ -48,7 +48,7 @@ func (dht *DHT) handleFindPeer(ctx context.Context, p p2p.ID, pmes *pb.Message) 
 
 func (dht *DHT) handleFindPeerResult(ctx context.Context, p p2p.ID, pmes *pb.Message) (_ *pb.Message, err error) {
 
-	// TODO: handle received peers 
+	// TODO: handle received peers
 	// handlePeers(pmesg.CloserPeers)
 
 	return nil, nil
@@ -56,7 +56,7 @@ func (dht *DHT) handleFindPeerResult(ctx context.Context, p p2p.ID, pmes *pb.Mes
 
 func (dht *DHT) handlePing(ctx context.Context, p p2p.ID, pmes *pb.Message) (_ *pb.Message, err error) {
 	// setup response
-	resp := pb.NewMessage(pb.Message_PONG)
+	resp := pb.NewMessage(pb.Message_PONG, "")
 
 	return resp, nil
 }

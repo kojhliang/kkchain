@@ -3,22 +3,22 @@ package dht
 import (
 	"testing"
 
-	crypto "github.com/libp2p/go-libp2p-crypto"
-	"fmt"
 	"encoding/hex"
+	"fmt"
+	crypto "github.com/libp2p/go-libp2p-crypto"
 )
 
 func TestFormatAddr(t *testing.T) {
 	t.Parallel()
 
 	key, _ := GenerateKey(crypto.Secp256k1)
-	pbKey,_ := key.GetPublic().Bytes()
+	pbKey, _ := key.GetPublic().Bytes()
 
 	peerA := CreateID("/ip4/127.0.0.1/tcp/8860", pbKey)
 
 	address := FormatPeerAddr(peerA)
 
-	expected := fmt.Sprintf("%s@%s", hex.EncodeToString(pbKey),"/ip4/127.0.0.1/tcp/8860")
+	expected := fmt.Sprintf("%s@%s", hex.EncodeToString(pbKey), "/ip4/127.0.0.1/tcp/8860")
 	if address != expected {
 		t.Errorf("FormatPeerAddr() = %+v, expected %+v\n", address, expected)
 	}

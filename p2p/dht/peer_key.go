@@ -1,9 +1,9 @@
 package dht
 
 import (
-	"io/ioutil"
-	"encoding/base64"
 	"crypto/rand"
+	"encoding/base64"
+	"io/ioutil"
 
 	crypto "github.com/libp2p/go-libp2p-crypto"
 )
@@ -51,7 +51,7 @@ func GenerateEd25519Key() (crypto.PrivKey, error) {
 	return key, err
 }
 
-func GenerateKey(typ int) (crypto.PrivKey, error)  {
+func GenerateKey(typ int) (crypto.PrivKey, error) {
 	key, _, err := crypto.GenerateKeyPair(typ, 256)
 	return key, err
 }

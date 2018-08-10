@@ -3,12 +3,12 @@ package dht
 import (
 	"context"
 
-	"github.com/invin/kkchain/p2p"
-	"github.com/invin/kkchain/p2p/dht/pb"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/glog"
-	"github.com/libp2p/go-libp2p-crypto"
+	"github.com/invin/kkchain/p2p"
+	"github.com/invin/kkchain/p2p/dht/pb"
 	"github.com/invin/kkchain/p2p/impl"
+	"github.com/libp2p/go-libp2p-crypto"
 )
 
 const (
@@ -20,12 +20,13 @@ type DHT struct {
 	// self
 	host p2p.Host
 
-	quitCh	chan bool
-	table	*RoutingTable
-	store	*PeerStore
-	config	*Config
-	self	PeerID
-	selfPrivateKey	crypto.PrivKey
+	quitCh         chan bool
+	table          *RoutingTable
+	store          *PeerStore
+	config         *Config
+	self           PeerID
+	selfPrivateKey crypto.PrivKey
+	recvCh         chan interface{}
 }
 
 // NewDHT creates a new DHT object with the given peer as as the 'local' host
@@ -42,13 +43,14 @@ func NewDHT(config *Config) *DHT {
 		return nil
 	}
 
-	dht := &DHT {
-		quitCh: make(chan bool),
-		config: config,
+	dht := &DHT{
+		quitCh:         make(chan bool),
+		config:         config,
 		selfPrivateKey: privateKey,
-		self: *self,
-		table: CreateRoutingTable(*self),
-		store: db,
+		self:           *self,
+		table:          CreateRoutingTable(*self),
+		store:          db,
+		recvCh:         make(chan interface{}),
 	}
 
 	initNetwork(config, dht)
@@ -61,25 +63,25 @@ func NewDHT(config *Config) *DHT {
 }
 
 //initNetwork init network and related config before startup
-func initNetwork(config *Config, dht *DHT)  {
+func initNetwork(config *Config, dht *DHT) {
 	//TODO: new server & and set to dht
 
 	dht.host = impl.NewHost(dht.self.ID)
 }
 
 // selfPeerID get local peer info
-func selfPeerID(config *Config) (*PeerID, crypto.PrivKey, error){
+func selfPeerID(config *Config) (*PeerID, crypto.PrivKey, error) {
 
 	peerKey, err := LoadNetworkKeyFromFileOrCreateNew(config.PrivateKeyPath)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	pubk, err:= peerKey.GetPublic().Bytes()
-	if err != nil{
+	pubk, err := peerKey.GetPublic().Bytes()
+	if err != nil {
 		return nil, nil, err
 	}
-	id := CreateID(config.localhost, pubk)
+	id := CreateID(config.Listen, pubk)
 
 	return &id, peerKey, nil
 }
@@ -93,17 +95,17 @@ func (dht *DHT) handleNewStream(s p2p.Stream, msg proto.Message) {
 	default:
 		s.Reset()
 		glog.Errorf("unexpected message: %v", msg)
-	}	
+	}
 }
 
-// handleMessage handles messsage 
+// handleMessage handles messsage
 func (dht *DHT) handleMessage(s p2p.Stream, msg *pb.Message) {
 	// get handler
 	handler := dht.handlerForMsgType(msg.GetType())
 	if handler == nil {
 		s.Reset()
 		glog.Errorf("unknown message type: %v", msg.GetType())
-		return	
+		return
 	}
 
 	// dispatch handler

@@ -1,10 +1,9 @@
 package dht
 
 import (
-	"sort"
 	"container/list"
+	"sort"
 	"sync"
-
 )
 
 // BucketSize defines the NodeID, Key, and routing table data structures.

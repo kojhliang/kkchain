@@ -5,25 +5,24 @@ import (
 	"sync"
 
 	"github.com/syndtr/goleveldb/leveldb"
-	"github.com/syndtr/goleveldb/leveldb/storage"
-	"github.com/syndtr/goleveldb/leveldb/opt"
 	"github.com/syndtr/goleveldb/leveldb/errors"
+	"github.com/syndtr/goleveldb/leveldb/opt"
+	"github.com/syndtr/goleveldb/leveldb/storage"
 	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
 type PeerStore struct {
-	db	*leveldb.DB
-	enableBatch	bool
-	opts	[]operation
-	mutex	sync.Mutex
+	db          *leveldb.DB
+	enableBatch bool
+	opts        []operation
+	mutex       sync.Mutex
 }
-
 
 type opType int
 
 const (
-	opTypePut   opType = 1
-	opTypeDel 	opType = 2
+	opTypePut opType = 1
+	opTypeDel opType = 2
 )
 
 type operation struct {
@@ -50,7 +49,7 @@ func newMemoryPeerStore() (*PeerStore, error) {
 		return nil, err
 	}
 	return &PeerStore{
-		db:  db,
+		db:          db,
 		enableBatch: false,
 	}, nil
 }
@@ -67,19 +66,19 @@ func newPersistentPeerStore(path string) (*PeerStore, error) {
 	}
 
 	return &PeerStore{
-		db:  db,
+		db:          db,
 		enableBatch: false,
 	}, nil
 }
 
 // FindPeerByPublicKey
-func (ps *PeerStore) FindPeerByPublicKey(pubk []byte) (*PeerID) {
+func (ps *PeerStore) FindPeerByPublicKey(pubk []byte) *PeerID {
 	id := GetIDFromPublicKey(pubk)
 	return ps.FindPeerByID(id)
 }
 
 // FindPeerByID
-func (ps *PeerStore) FindPeerByID(id []byte) (*PeerID) {
+func (ps *PeerStore) FindPeerByID(id []byte) *PeerID {
 
 	blob, err := ps.db.Get(id, nil)
 	if err != nil {
@@ -89,7 +88,7 @@ func (ps *PeerStore) FindPeerByID(id []byte) (*PeerID) {
 
 	err = json.Unmarshal(blob, &peer)
 	if err != nil {
-		return  nil
+		return nil
 	}
 
 	return peer
@@ -107,10 +106,9 @@ func (ps *PeerStore) Update(id *PeerID) error {
 		ps.mutex.Lock()
 		defer ps.mutex.Unlock()
 
-		ps.opts = append(ps.opts, operation{opTypePut,id.Hash, blob})
+		ps.opts = append(ps.opts, operation{opTypePut, id.Hash, blob})
 		return nil
 	}
-
 
 	return ps.db.Put(id.Hash, blob, nil)
 }
@@ -122,7 +120,7 @@ func (ps *PeerStore) Delete(id *PeerID) error {
 		ps.mutex.Lock()
 		defer ps.mutex.Unlock()
 
-		ps.opts = append(ps.opts, operation{opTypeDel,id.Hash, nil})
+		ps.opts = append(ps.opts, operation{opTypeDel, id.Hash, nil})
 		return nil
 	}
 
@@ -158,7 +156,7 @@ func (ps *PeerStore) Flush() error {
 			batch.Delete(opt.key)
 		}
 	}
-	 ps.opts = nil
+	ps.opts = nil
 
 	return ps.db.Write(batch, nil)
 }
