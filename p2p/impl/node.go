@@ -1,4 +1,4 @@
-package p2p
+package impl
 
 import (
 	"fmt"
@@ -10,14 +10,13 @@ import (
 
 	"strconv"
 
-	"github.com/invin/kkchain/p2p/dht"
-	"github.com/invin/kkchain/p2p/impl"
+	"github.com/invin/kkchain/p2p"
 )
 
 type Node struct {
 	IP      string
 	TCPPort string
-	ID      dht.PeerID
+	ID      p2p.ID
 }
 
 func (n *Node) String() string {
@@ -38,11 +37,13 @@ func (n *Node) String() string {
 }
 
 type Peer struct {
-	conn    *impl.Connection
-	created time.Time
-	closed  chan struct{}
-	disc    chan DisconnectReason
-	ID      dht.PeerID
+	conn     *Connection
+	created  time.Time
+	lastPing time.Time
+	lastPong time.Time
+	closed   chan struct{}
+	disc     chan DisconnectReason
+	ID       p2p.ID
 }
 
 func (p *Peer) RemoteAddr() net.Addr {
@@ -57,6 +58,7 @@ func (p *Peer) Disconnect(reason DisconnectReason) {
 	select {
 	case p.disc <- reason:
 	case <-p.closed:
+		p.conn.Close()
 	}
 }
 
@@ -64,7 +66,7 @@ func (p *Peer) String() string {
 	return fmt.Sprintf("Peer %s %v", hex.EncodeToString(p.ID.PublicKey), p.RemoteAddr())
 }
 
-func newPeer(conn *impl.Connection) *Peer {
+func newPeer(conn *Connection) *Peer {
 	p := &Peer{
 		conn:    conn,
 		created: time.Now(),

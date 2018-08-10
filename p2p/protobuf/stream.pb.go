@@ -37,7 +37,7 @@ type ID struct {
 func (m *ID) Reset()      { *m = ID{} }
 func (*ID) ProtoMessage() {}
 func (*ID) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_5a221e613bee321d, []int{0}
+	return fileDescriptor_stream_6b8892d4c26fb395, []int{0}
 }
 func (m *ID) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -81,6 +81,7 @@ func (m *ID) GetAddress() string {
 }
 
 type Message struct {
+	// Protocol specific message
 	Message *types.Any `protobuf:"bytes,1,opt,name=message" json:"message,omitempty"`
 	// Sender's address and public key.
 	Sender *ID `protobuf:"bytes,2,opt,name=sender" json:"sender,omitempty"`
@@ -99,7 +100,7 @@ type Message struct {
 func (m *Message) Reset()      { *m = Message{} }
 func (*Message) ProtoMessage() {}
 func (*Message) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stream_5a221e613bee321d, []int{1}
+	return fileDescriptor_stream_6b8892d4c26fb395, []int{1}
 }
 func (m *Message) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -973,9 +974,9 @@ var (
 	ErrIntOverflowStream   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("p2p/protobuf/stream.proto", fileDescriptor_stream_5a221e613bee321d) }
+func init() { proto.RegisterFile("p2p/protobuf/stream.proto", fileDescriptor_stream_6b8892d4c26fb395) }
 
-var fileDescriptor_stream_5a221e613bee321d = []byte{
+var fileDescriptor_stream_6b8892d4c26fb395 = []byte{
 	// 349 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x44, 0x90, 0x41, 0x4e, 0xf2, 0x40,
 	0x1c, 0xc5, 0xf9, 0xf3, 0xf1, 0x81, 0x0c, 0x65, 0xe1, 0xc4, 0xc4, 0x42, 0x74, 0xd2, 0xa0, 0x8b,

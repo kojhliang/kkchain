@@ -1,4 +1,4 @@
-package p2p
+package impl
 
 import (
 	"errors"
@@ -7,11 +7,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/invin/kkchain/p2p/dht"
-	"github.com/meitu/go-ethereum/log"
+	"github.com/invin/kkchain/p2p"
 )
 
-type NodeDialer interface {
+type Dialer interface {
 	Dial(*Node) (net.Conn, error)
 }
 
@@ -30,8 +29,8 @@ func (t TCPDialer) Dial(dest *Node) (net.Conn, error) {
 
 // dialstate schedules dials
 type dialstate struct {
-	dialing   map[dht.PeerID]*dialTask
-	task      map[dht.PeerID]*dialTask
+	dialing   map[p2p.ID]*dialTask
+	task      map[p2p.ID]*dialTask
 	bootnodes []*Node
 }
 
@@ -43,7 +42,7 @@ type dialTask struct {
 
 func newDialState(bootnodes []*Node, msgType MsgType) *dialstate {
 	s := &dialstate{
-		task:      make(map[dht.PeerID]*dialTask),
+		task:      make(map[p2p.ID]*dialTask),
 		bootnodes: make([]*Node, len(bootnodes)),
 	}
 	copy(s.bootnodes, bootnodes)
@@ -77,21 +76,21 @@ func (s *dialstate) checkDial(n *Node) error {
 	return nil
 }
 
-func (t *dialTask) Do(srv *Server) {
+func (t *dialTask) Do(n *Network) {
 	if t.dest.IP == "" {
-		if !t.resolve(srv) {
+		if !t.resolve(n) {
 			return
 		}
 	}
-	err := t.dial(srv, t.dest)
+	err := t.dial(n, t.dest)
 	if err != nil {
 		log.Error("failed to dial:", err)
 	}
 }
 
-func (t *dialTask) resolve(srv *Server) bool {
+func (t *dialTask) resolve(n *Network) bool {
 	var resolved *Node
-	peer := srv.peers[t.dest.ID.ID]
+	peer := n.peers[t.dest.ID]
 	if peer != nil {
 		addrStr := peer.RemoteAddr().String()
 		addrArr := strings.Split(addrStr, ":")
@@ -106,14 +105,14 @@ func (t *dialTask) resolve(srv *Server) bool {
 	return true
 }
 
-func (t *dialTask) dial(srv *Server, dest *Node) error {
-	fd, err := srv.dialer.Dial(dest)
+func (t *dialTask) dial(n *Network, dest *Node) error {
+	fd, err := n.dialer.Dial(dest)
 	if err != nil {
 		return err
 	}
-	return srv.SetupConn(fd, t.flag, t.msgType, dest)
+	return n.SetupConn(fd, t.flag, t.msgType, dest)
 }
 
 func (t *dialTask) String() string {
-	return fmt.Sprintf("%v %x %v:%d", t.flag, t.dest.ID.ID.PublicKey[:8], t.dest.IP, t.dest.TCPPort)
+	return fmt.Sprintf("%v %x %v:%d", t.flag, t.dest.ID.PublicKey[:8], t.dest.IP, t.dest.TCPPort)
 }

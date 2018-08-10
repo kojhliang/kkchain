@@ -1,15 +1,39 @@
-package impl 
+package impl
 
 import (
 	"fmt"
 	"net"
+	"sync"
 
-	"github.com/invin/kkchain/crypto/ed25519"
-	"github.com/invin/kkchain/crypto"
-	"github.com/invin/kkchain/p2p"
-	"github.com/invin/kkchain/p2p/protobuf"
+	"time"
+
+	"strings"
+
 	"github.com/gogo/protobuf/types"
-	"github.com/golang/glog"
+	"github.com/invin/kkchain/crypto"
+	"github.com/invin/kkchain/crypto/ed25519"
+	"github.com/invin/kkchain/p2p"
+	"github.com/invin/kkchain/p2p/dht"
+	"github.com/invin/kkchain/p2p/protobuf"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+)
+
+var (
+	errServerStopped = errors.New("server stopped")
+	log              = logrus.New()
+)
+
+const (
+	defaultDialTimeout = 15 * time.Second
+	defaultDBPath      = "./nodedb"
+)
+
+type connFlag int
+
+const (
+	outboundConn connFlag = iota
+	inboundConn
 )
 
 // Network represents the whole stack of p2p communication between peers
@@ -18,6 +42,15 @@ type Network struct {
 	host p2p.Host
 	// Node's keypair.
 	keys *crypto.KeyPair
+
+	peers          map[p2p.ID]*Peer
+	BootstrapNodes []*Node
+	ListenAddr     string
+	dialer         Dialer
+	running        bool
+	quit           chan struct{}
+	lock           sync.Mutex
+	loopWG         sync.WaitGroup
 }
 
 // NewNetwork creates a new Network instance with the specified configuration
@@ -32,9 +65,65 @@ func NewNetwork(address string, conf p2p.Config) *Network {
 	}
 }
 
+func (n *Network) Self() *Node {
+	n.lock.Lock()
+	defer n.lock.Unlock()
+	if !n.running {
+		return nil
+	}
+	return n.makeSelf(n.ListenAddr)
+}
+
+func (n *Network) makeSelf(listenAddr string) *Node {
+	pubkey := n.keys.PublicKey
+	if listenAddr == "" {
+		return &Node{IP: "0.0.0.0", ID: p2p.CreateID("0.0.0.0", pubkey)}
+	}
+	addr := strings.Split(listenAddr, ":")
+	return &Node{
+		ID:      p2p.CreateID(listenAddr, pubkey),
+		IP:      addr[0],
+		TCPPort: addr[1],
+	}
+}
+
 // Start kicks off the p2p stack
 func (n *Network) Start() error {
-	// TODO: start local server 
+	n.lock.Lock()
+	defer n.lock.Unlock()
+	if n.running {
+		return errors.New("server already running")
+	}
+	n.running = true
+
+	log.Info("start P2P network")
+
+	if n.keys == nil {
+		return fmt.Errorf("Server.PrivateKey must be set to a non-nil key")
+	}
+
+	if n.dialer == nil {
+		n.dialer = TCPDialer{&net.Dialer{Timeout: defaultDialTimeout}}
+	}
+
+	n.quit = make(chan struct{})
+	dialer := newDialState(n.BootstrapNodes, msg_dht)
+
+	// listen
+	if n.ListenAddr != "" {
+		if err := n.startListening(); err != nil {
+			return err
+		}
+	} else {
+		log.Warn("P2P server will be useless, not listening")
+	}
+
+	n.loopWG.Add(1)
+
+	// dail
+	go n.run(dialer)
+	n.running = true
+	return nil
 
 	return nil
 }
@@ -46,7 +135,140 @@ func (n *Network) Conf() p2p.Config {
 
 // Stop stops the p2p stack
 func (n *Network) Stop() {
-	// TODO: stop local server
+	n.lock.Lock()
+	defer n.lock.Unlock()
+	if !n.running {
+		return
+	}
+	n.running = false
+	close(n.quit)
+	n.loopWG.Wait()
+}
+
+func (n *Network) startListening() error {
+	listener, err := net.Listen("tcp", n.ListenAddr)
+	if err != nil {
+		return err
+	}
+	laddr := listener.Addr().(*net.TCPAddr)
+	n.ListenAddr = laddr.String()
+	n.loopWG.Add(1)
+	go n.listenLoop(listener)
+	return nil
+}
+
+func (n *Network) run(dialstate *dialstate) {
+	defer n.loopWG.Done()
+
+	startTask := func() {
+		for _, node := range n.BootstrapNodes {
+			err := dialstate.checkDial(node)
+			if err != nil {
+				log.Error("wrong dial task:", err)
+				continue
+			}
+			t := dialstate.task[node.ID]
+			go t.Do(n)
+		}
+	}
+
+running:
+	for {
+		startTask()
+		select {
+		case <-n.quit:
+			break running
+		}
+	}
+
+	// when server quit , close all connection
+	for _, p := range n.peers {
+		p.Disconnect(DiscQuitting)
+	}
+	n.host.RemoveAllConnection()
+}
+
+func (n *Network) listenLoop(listener net.Listener) {
+	defer n.loopWG.Done()
+	for {
+		var (
+			fd  net.Conn
+			err error
+		)
+		for {
+			fd, err = listener.Accept()
+			if err != nil {
+				log.Error("failed to accept:", err)
+				return
+			}
+			break
+		}
+		go func() {
+			n.SetupConn(fd, inboundConn, -1, nil)
+		}()
+	}
+}
+
+// create connection
+func (n *Network) SetupConn(fd net.Conn, flag connFlag, msgType MsgType, dialDest *Node) error {
+	self := n.Self()
+	if self == nil {
+		return errors.New("shutdown")
+	}
+	err := n.setupConn(fd, flag, msgType, dialDest)
+	if err != nil {
+		log.WithFields(logrus.Fields{
+			"id":    fd.RemoteAddr().String(),
+			"error": err,
+		}).Error("failed to set up connection")
+		return err
+	}
+	return nil
+}
+
+func (n *Network) setupConn(fd net.Conn, flag connFlag, msgType MsgType, dialDest *Node) error {
+	n.lock.Lock()
+	running := n.running
+	n.lock.Unlock()
+	if !running {
+		return errServerStopped
+	}
+
+	if flag == inboundConn {
+
+		// inbound conn
+		n.Accept(fd)
+		peer := newPeer(NewConnection(fd, n, n.host))
+		n.peers[peer.ID] = peer
+		log.WithFields(logrus.Fields{
+			"addr": fd.RemoteAddr().String(),
+			"conn": flag,
+		}).Info("accept connection")
+	} else {
+
+		// outbound conn
+		n.DoProtocol(dialDest, msgType)
+	}
+	return nil
+}
+
+func (n *Network) DoProtocol(dest *Node, msgType MsgType) {
+	for {
+		switch msgType {
+		case msg_handshake:
+			// NewHandshake(n.host)
+		case msg_dht:
+			selfID := dht.CreateID(n.ListenAddr, n.host.ID().PublicKey)
+			dht := dht.NewDHT(n.host, defaultDBPath, selfID)
+			dht.Start()
+			select {
+			case <-n.quit:
+				dht.Stop()
+			}
+		case msg_chain:
+			// NewChain(n.host)
+		}
+	}
 }
 
 // Accept connection
@@ -63,18 +285,18 @@ func (n *Network) Accept(incoming net.Conn) {
 	for {
 		msg, err := conn.ReadMessage()
 		if err != nil {
-			glog.Error(err)
+			log.Error(err)
 			break
 		}
 
 		err = n.dispatchMessage(conn, msg)
 
 		if err != nil {
-			glog.Error(err)
+			log.Error(err)
 			break
 		}
 	}
-	
+
 	fmt.Println("exit loop for connection")
 }
 
@@ -83,20 +305,20 @@ func (n *Network) dispatchMessage(conn p2p.Conn, msg *protobuf.Message) error {
 	// get stream handler
 	handler, err := n.host.GetStreamHandler(msg.Protocol)
 	if err != nil {
-		return err 
+		return err
 	}
 
 	// unmarshal message
 	var ptr types.DynamicAny
 	if err = types.UnmarshalAny(msg.Message, &ptr); err != nil {
-		glog.Error(err)
+		log.Error(err)
 		return err
 	}
-	
+
 	// handle message
 	stream := NewStream(conn, msg.Protocol)
 	handler(stream, ptr.Message)
-	
+
 	return nil
 }
 
