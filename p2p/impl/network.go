@@ -49,7 +49,6 @@ type Network struct {
 	peers          map[p2p.ID]*Peer
 	BootstrapNodes []*Node
 	ListenAddr     string
-	dialer         Dialer
 	running        bool
 	quit           chan struct{}
 	lock           sync.Mutex
@@ -105,12 +104,7 @@ func (n *Network) Start() error {
 		return fmt.Errorf("Server.PrivateKey must be set to a non-nil key")
 	}
 
-	if n.dialer == nil {
-		n.dialer = TCPDialer{&net.Dialer{Timeout: defaultDialTimeout}}
-	}
-
 	n.quit = make(chan struct{})
-	dialer := newDialState(n.BootstrapNodes)
 
 	// init handshake msg handler
 	handshake.NewHandshake(n.host)
@@ -144,7 +138,7 @@ func (n *Network) Start() error {
 	n.loopWG.Add(1)
 
 	// dail
-	go n.run(dialer)
+	go n.run()
 	n.running = true
 
 	return nil
@@ -179,24 +173,19 @@ func (n *Network) startListening() error {
 	return nil
 }
 
-func (n *Network) run(dialstate *dialstate) {
+func (n *Network) run() {
 	defer n.loopWG.Done()
-
-	startTask := func() {
-		for _, node := range n.BootstrapNodes {
-			err := dialstate.checkDial(node)
-			if err != nil {
-				log.Error("wrong dial task:", err)
-				continue
-			}
-			t := dialstate.task[node.ID]
-			go t.Do(n)
-		}
-	}
 
 running:
 	for {
-		startTask()
+
+		// connect boostnode
+		for _, node := range n.BootstrapNodes {
+			if conn, _ := n.host.GetConnection(node.ID); conn != nil {
+				continue
+			}
+			go n.host.Connect(node.Addr())
+		}
 		select {
 		case <-n.quit:
 			break running
