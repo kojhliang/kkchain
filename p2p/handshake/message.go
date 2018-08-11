@@ -1,4 +1,4 @@
-package pb 
+package handshake
 
 // NewMessage creates a new message object
 func NewMessage(typ Message_Type) *Message {
@@ -12,6 +12,7 @@ func NewMessage(typ Message_Type) *Message {
 // BuildHandshake build message body for handshaking
 func BuildHandshake(msg *Message) {
 	msg.ProtocolVersion = "handshake/1.0.0"
-	// TODO: 
+	// TODO:
 }
+
 // TODO: add other routines

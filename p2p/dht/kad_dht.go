@@ -4,10 +4,10 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"github.com/invin/kkchain/p2p/dht/pb"
-	"github.com/invin/kkchain/p2p/impl"
 	"math/rand"
 	"time"
+
+	"github.com/invin/kkchain/p2p/impl"
 )
 
 //type DHT struct {
@@ -111,7 +111,7 @@ func (dht *DHT) FindTargetNeighbours(target []byte, peer PeerID) {
 
 	//send find neighbours request to peer
 	stream := impl.NewStream(conn, protocolDHT)
-	pmes := pb.NewMessage(pb.Message_FIND_NODE, hex.EncodeToString(target))
+	pmes := NewMessage(Message_FIND_NODE, hex.EncodeToString(target))
 
 	smes, err := conn.PrepareMessage(pmes)
 	stream.Conn().WriteMessage(smes)

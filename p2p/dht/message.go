@@ -1,4 +1,4 @@
-package pb
+package dht
 
 import (
 	"github.com/invin/kkchain/p2p"
@@ -8,7 +8,7 @@ import (
 func NewMessage(typ Message_Type, key string) *Message {
 	m := &Message{
 		Type: typ,
-		Key: key,
+		Key:  key,
 	}
 
 	return m
@@ -16,8 +16,7 @@ func NewMessage(typ Message_Type, key string) *Message {
 
 // FindCloserPeers find closer peers
 func FindCloserPeers(pid p2p.ID) []*Message_Peer {
-	// TODO: 	
+	// TODO:
 	peers := make([]*Message_Peer, 32)
 	return peers
 }
-

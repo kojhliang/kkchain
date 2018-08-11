@@ -3,46 +3,46 @@ package dht
 import (
 	"context"
 	"encoding/hex"
+
 	"github.com/invin/kkchain/p2p"
-	"github.com/invin/kkchain/p2p/dht/pb"
 )
 
 // dhthandler specifies the signature of functions that handle DHT messages.
-type dhtHandler func(context.Context, p2p.ID, *pb.Message) (*pb.Message, error)
+type dhtHandler func(context.Context, p2p.ID, *Message) (*Message, error)
 
-func (dht *DHT) handlerForMsgType(t pb.Message_Type) dhtHandler {
+func (dht *DHT) handlerForMsgType(t Message_Type) dhtHandler {
 	switch t {
-	case pb.Message_GET_VALUE:
+	case Message_GET_VALUE:
 		return dht.handleGetValue
-	case pb.Message_PUT_VALUE:
+	case Message_PUT_VALUE:
 		return dht.handlePutValue
-	case pb.Message_FIND_NODE:
+	case Message_FIND_NODE:
 		return dht.handleFindPeer
-	case pb.Message_FIND_NODE_RESULT:
+	case Message_FIND_NODE_RESULT:
 		return dht.handleFindPeerResult
-	case pb.Message_PING:
+	case Message_PING:
 		return dht.handlePing
-	case pb.Message_PONG:
+	case Message_PONG:
 		return dht.handlePong
 	default:
 		return nil
 	}
 }
 
-func (dht *DHT) handleGetValue(ctx context.Context, p p2p.ID, pmes *pb.Message) (_ *pb.Message, err error) {
+func (dht *DHT) handleGetValue(ctx context.Context, p p2p.ID, pmes *Message) (_ *Message, err error) {
 	// TODO: setup response
 	return nil, nil
 }
 
-func (dht *DHT) handlePutValue(ctx context.Context, p p2p.ID, pmes *pb.Message) (_ *pb.Message, err error) {
+func (dht *DHT) handlePutValue(ctx context.Context, p p2p.ID, pmes *Message) (_ *Message, err error) {
 	// TODO: setup response
 	return nil, nil
 }
 
-func (dht *DHT) handleFindPeer(ctx context.Context, p p2p.ID, pmes *pb.Message) (_ *pb.Message, err error) {
+func (dht *DHT) handleFindPeer(ctx context.Context, p p2p.ID, pmes *Message) (_ *Message, err error) {
 	// setup response
-	resp := pb.NewMessage(pb.Message_FIND_NODE_RESULT, "")
-	resp.CloserPeers = pb.FindCloserPeers(p)
+	resp := NewMessage(Message_FIND_NODE_RESULT, "")
+	resp.CloserPeers = FindCloserPeers(p)
 
 	target, err := hex.DecodeString(pmes.Key)
 	if err != nil {
@@ -53,13 +53,13 @@ func (dht *DHT) handleFindPeer(ctx context.Context, p p2p.ID, pmes *pb.Message) 
 	closest := dht.table.FindClosestPeers(peer, BucketSize)
 
 	for _, p := range closest {
-		resp.CloserPeers = append(resp.CloserPeers, &pb.Message_Peer{Id: p.ID.PublicKeyHex()})
+		resp.CloserPeers = append(resp.CloserPeers, &Message_Peer{Id: p.ID.PublicKeyHex()})
 	}
 
 	return resp, nil
 }
 
-func (dht *DHT) handleFindPeerResult(ctx context.Context, p p2p.ID, pmes *pb.Message) (_ *pb.Message, err error) {
+func (dht *DHT) handleFindPeerResult(ctx context.Context, p p2p.ID, pmes *Message) (_ *Message, err error) {
 
 	// TODO: handle received peers
 	// handlePeers(pmesg.CloserPeers)
@@ -67,14 +67,14 @@ func (dht *DHT) handleFindPeerResult(ctx context.Context, p p2p.ID, pmes *pb.Mes
 	return nil, nil
 }
 
-func (dht *DHT) handlePing(ctx context.Context, p p2p.ID, pmes *pb.Message) (_ *pb.Message, err error) {
+func (dht *DHT) handlePing(ctx context.Context, p p2p.ID, pmes *Message) (_ *Message, err error) {
 	// setup response
-	resp := pb.NewMessage(pb.Message_PONG, "")
+	resp := NewMessage(Message_PONG, "")
 
 	return resp, nil
 }
 
-func (dht *DHT) handlePong(ctx context.Context, p p2p.ID, pmes *pb.Message) (_ *pb.Message, err error) {
+func (dht *DHT) handlePong(ctx context.Context, p p2p.ID, pmes *Message) (_ *Message, err error) {
 	// TODO: update connection status
 	return nil, nil
 }

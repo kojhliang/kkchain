@@ -1,12 +1,11 @@
-package chain 
+package chain
 
 import (
 	"context"
 
-	"github.com/invin/kkchain/p2p"
-	"github.com/invin/kkchain/p2p/chain/pb"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/glog"
+	"github.com/invin/kkchain/p2p"
 )
 
 const (
@@ -21,7 +20,7 @@ type Chain struct {
 
 // NewChain creates a new Chain object
 func NewChain(host p2p.Host) *Chain {
-	c := &Chain {
+	c := &Chain{
 		host: host,
 	}
 
@@ -36,22 +35,22 @@ func NewChain(host p2p.Host) *Chain {
 func (c *Chain) handleNewStream(s p2p.Stream, msg proto.Message) {
 	// check message type
 	switch message := msg.(type) {
-	case *pb.Message:
+	case *Message:
 		c.handleMessage(s, message)
 	default:
 		s.Reset()
 		glog.Errorf("unexpected message: %v", msg)
-	}	
+	}
 }
 
-// handleMessage handles messsage 
-func (c *Chain) handleMessage(s p2p.Stream, msg *pb.Message) {
+// handleMessage handles messsage
+func (c *Chain) handleMessage(s p2p.Stream, msg *Message) {
 	// get handler
 	handler := c.handlerForMsgType(msg.GetType())
 	if handler == nil {
 		s.Reset()
 		glog.Errorf("unknown message type: %v", msg.GetType())
-		return	
+		return
 	}
 
 	// dispatch handler

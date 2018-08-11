@@ -6,8 +6,8 @@ import (
 
 	"net"
 
+	"github.com/gogo/protobuf/proto"
 	"github.com/invin/kkchain/p2p"
-	"github.com/invin/kkchain/p2p/protobuf"
 )
 
 var (
@@ -111,24 +111,21 @@ func (h *Host) ID() p2p.ID {
 
 // Connect connects to remote peer
 func (h *Host) Connect(address string) error {
-	// TODO:if first connect,host don't know remote ID..
+	// TODO:create conn and send handshake msg(with self ID)
 
 	return nil
 }
 
 // SendMsg sends single msg
-func (h *Host) SendMsg(fd net.Conn, msg *protobuf.Message) error {
-	network := NewNetwork(fd.RemoteAddr().String(), p2p.Config{})
+func (h *Host) SendMsg(fd net.Conn, network p2p.Network, msg proto.Message) {
 	conn := NewConnection(fd, network, h)
-	pbMsg, err := conn.PrepareMessage(msg)
-	if err != nil {
-		return err
+	if conn == nil {
+		return
 	}
-	err = conn.WriteMessage(pbMsg)
-	if err != nil {
-		return err
+	stream := NewStream(conn, "")
+	if stream != nil {
+		stream.Write(msg)
 	}
-	return nil
 }
 
 // SetStreamHandler sets handler for some a stream

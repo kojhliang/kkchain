@@ -35,12 +35,11 @@ type dialstate struct {
 }
 
 type dialTask struct {
-	flag    connFlag
-	msgType MsgType
-	dest    *Node
+	flag connFlag
+	dest *Node
 }
 
-func newDialState(bootnodes []*Node, msgType MsgType) *dialstate {
+func newDialState(bootnodes []*Node) *dialstate {
 	s := &dialstate{
 		task:      make(map[p2p.ID]*dialTask),
 		bootnodes: make([]*Node, len(bootnodes)),
@@ -49,7 +48,6 @@ func newDialState(bootnodes []*Node, msgType MsgType) *dialstate {
 	for _, node := range bootnodes {
 		dialtask := &dialTask{
 			outboundConn,
-			msgType,
 			node,
 		}
 		s.task[node.ID] = dialtask
@@ -110,7 +108,7 @@ func (t *dialTask) dial(n *Network, dest *Node) error {
 	if err != nil {
 		return err
 	}
-	return n.SetupConn(fd, t.flag, t.msgType, dest)
+	return n.SetupConn(fd, t.flag, dest)
 }
 
 func (t *dialTask) String() string {

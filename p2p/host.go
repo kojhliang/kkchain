@@ -1,5 +1,11 @@
 package p2p
 
+import (
+	"net"
+
+	"github.com/gogo/protobuf/proto"
+)
+
 // ConnManager defines interface to manage connections
 type ConnManager interface {
 	// Add a connection
@@ -27,6 +33,8 @@ type Host interface {
 
 	// Connect to remote peer
 	Connect(address string) error
+
+	SendMsg(fd net.Conn, network Network, msg proto.Message)
 
 	// Set stream handler
 	SetStreamHandler(protocol string, handler StreamHandler) error
