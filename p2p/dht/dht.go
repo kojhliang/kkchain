@@ -28,6 +28,10 @@ type DHT struct {
 	recvCh         chan interface{}
 }
 
+func (dht *DHT) GetRecvchan() chan interface{} {
+	return dht.recvCh
+}
+
 // NewDHT creates a new DHT object with the given peer as as the 'local' host
 func NewDHT(config *Config) *DHT {
 

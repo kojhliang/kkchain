@@ -104,11 +104,7 @@ func (t *dialTask) resolve(n *Network) bool {
 }
 
 func (t *dialTask) dial(n *Network, dest *Node) error {
-	fd, err := n.dialer.Dial(dest)
-	if err != nil {
-		return err
-	}
-	return n.SetupConn(fd, t.flag, dest)
+	return n.host.Connect(dest.Addr())
 }
 
 func (t *dialTask) String() string {

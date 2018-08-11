@@ -2,6 +2,17 @@ package impl
 
 import (
 	"fmt"
+
+	"github.com/pkg/errors"
+)
+
+var (
+	errDuplicateConnection = errors.New("duplicated connection")
+	errDuplicateStream     = errors.New("duplicated stream")
+	errConnectionNotFound  = errors.New("connection not found")
+	errStreamNotFound      = errors.New("stream not found")
+	failedNewConnection    = errors.New("failed to new connection")
+	failedNewNetwork       = errors.New("failed to new network")
 )
 
 const (

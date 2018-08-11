@@ -1,20 +1,13 @@
 package impl
 
 import (
-	"errors"
 	"sync"
 
 	"net"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/invin/kkchain/p2p"
-)
-
-var (
-	errDuplicateConnection = errors.New("duplicated connection")
-	errDuplicateStream     = errors.New("duplicated stream")
-	errConnectionNotFound  = errors.New("connection not found")
-	errStreamNotFound      = errors.New("stream not found")
+	"github.com/invin/kkchain/p2p/handshake"
 )
 
 // Host defines a host for connections
@@ -111,7 +104,17 @@ func (h *Host) ID() p2p.ID {
 
 // Connect connects to remote peer
 func (h *Host) Connect(address string) error {
-	// TODO:create conn and send handshake msg(with self ID)
+	fd, err := net.Dial("tcp", address)
+	if err != nil {
+		return err
+	}
+	network := NewNetwork(h.id.Address, p2p.Config{})
+	if network == nil {
+		return failedNewNetwork
+	}
+	msg := handshake.NewMessage(handshake.Message_HELLO)
+	handshake.BuildHandshake(msg)
+	h.SendMsg(fd, network, msg)
 
 	return nil
 }

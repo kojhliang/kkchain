@@ -2,7 +2,6 @@ package p2p
 
 import (
 	"io"
-	"net"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/invin/kkchain/crypto"
@@ -27,7 +26,7 @@ type Network interface {
 	Stop()
 
 	// Accept connection
-	Accept(incoming net.Conn) error
+	Accept(incoming Conn) error
 
 	// Sign message
 	Sign(message []byte) ([]byte, error)
