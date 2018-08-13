@@ -1,18 +1,17 @@
 package p2p
 
 import (
-	"net"
 	"io"
 
+	"github.com/gogo/protobuf/proto"
 	"github.com/invin/kkchain/crypto"
 	"github.com/invin/kkchain/p2p/protobuf"
-	"github.com/gogo/protobuf/proto"
 )
 
 // Config defines configurations for a basic network instance
 type Config struct {
-	SignaturePolicy	crypto.SignaturePolicy
-	HashPolicy crypto.HashPolicy	
+	SignaturePolicy crypto.SignaturePolicy
+	HashPolicy      crypto.HashPolicy
 }
 
 // Network defines the interface for network communication
@@ -27,23 +26,22 @@ type Network interface {
 	Stop()
 
 	// Accept connection
-	Accept(incoming net.Conn)
+	Accept(incoming Conn) error
 
 	// Sign message
 	Sign(message []byte) ([]byte, error)
 
 	// Verify message
 	Verify(publicKey []byte, message []byte, signature []byte) bool
-	
 }
 
-// Conn wraps connection related operations, such as reading and writing 
+// Conn wraps connection related operations, such as reading and writing
 // messages
 type Conn interface {
 	io.Closer
 
-	// Read message 
-	ReadMessage()(*protobuf.Message, error)
+	// Read message
+	ReadMessage() (*protobuf.Message, error)
 
 	// Write message
 	WriteMessage(*protobuf.Message) error

@@ -36,6 +36,10 @@ func (n *Node) String() string {
 	return u.String()
 }
 
+func (n *Node) Addr() string {
+	return n.IP + ":" + n.TCPPort
+}
+
 type Peer struct {
 	conn     *Connection
 	created  time.Time

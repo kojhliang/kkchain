@@ -1,4 +1,4 @@
-package pb 
+package chain
 
 // NewMessage creates a new message object
 func NewMessage(typ Message_Type) *Message {

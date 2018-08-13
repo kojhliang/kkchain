@@ -13,7 +13,9 @@ import (
 	"github.com/invin/kkchain/crypto"
 	"github.com/invin/kkchain/crypto/ed25519"
 	"github.com/invin/kkchain/p2p"
+	"github.com/invin/kkchain/p2p/chain"
 	"github.com/invin/kkchain/p2p/dht"
+	"github.com/invin/kkchain/p2p/handshake"
 	"github.com/invin/kkchain/p2p/protobuf"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -43,10 +45,10 @@ type Network struct {
 	// Node's keypair.
 	keys *crypto.KeyPair
 
+	dht            *dht.DHT
 	peers          map[p2p.ID]*Peer
 	BootstrapNodes []*Node
 	ListenAddr     string
-	dialer         Dialer
 	running        bool
 	quit           chan struct{}
 	lock           sync.Mutex
@@ -102,12 +104,27 @@ func (n *Network) Start() error {
 		return fmt.Errorf("Server.PrivateKey must be set to a non-nil key")
 	}
 
-	if n.dialer == nil {
-		n.dialer = TCPDialer{&net.Dialer{Timeout: defaultDialTimeout}}
-	}
-
 	n.quit = make(chan struct{})
-	dialer := newDialState(n.BootstrapNodes, msg_dht)
+
+	// init handshake msg handler
+	handshake.NewHandshake(n.host)
+	// init chain msg handler
+	chain.NewChain(n.host)
+	// set host to handle dht msg,and run dht
+	config := dht.DefaultConfig()
+	config.Listen = n.ListenAddr
+	n.dht = dht.NewDHT(config)
+
+	// do dht
+	go func() {
+		n.dht.Start()
+		select {
+		case <-n.quit:
+			n.dht.Stop()
+		}
+	}()
+
+	// TODO:process chain sync
 
 	// listen
 	if n.ListenAddr != "" {
@@ -121,9 +138,8 @@ func (n *Network) Start() error {
 	n.loopWG.Add(1)
 
 	// dail
-	go n.run(dialer)
+	go n.run()
 	n.running = true
-	return nil
 
 	return nil
 }
@@ -157,24 +173,19 @@ func (n *Network) startListening() error {
 	return nil
 }
 
-func (n *Network) run(dialstate *dialstate) {
+func (n *Network) run() {
 	defer n.loopWG.Done()
-
-	startTask := func() {
-		for _, node := range n.BootstrapNodes {
-			err := dialstate.checkDial(node)
-			if err != nil {
-				log.Error("wrong dial task:", err)
-				continue
-			}
-			t := dialstate.task[node.ID]
-			go t.Do(n)
-		}
-	}
 
 running:
 	for {
-		startTask()
+
+		// connect boostnode
+		for _, node := range n.BootstrapNodes {
+			if conn, _ := n.host.GetConnection(node.ID); conn != nil {
+				continue
+			}
+			go n.host.Connect(node.Addr())
+		}
 		select {
 		case <-n.quit:
 			break running
@@ -204,18 +215,18 @@ func (n *Network) listenLoop(listener net.Listener) {
 			break
 		}
 		go func() {
-			n.SetupConn(fd, inboundConn, -1, nil)
+			n.SetupConn(fd, inboundConn, nil)
 		}()
 	}
 }
 
 // create connection
-func (n *Network) SetupConn(fd net.Conn, flag connFlag, msgType MsgType, dialDest *Node) error {
+func (n *Network) SetupConn(fd net.Conn, flag connFlag, dialDest *Node) error {
 	self := n.Self()
 	if self == nil {
 		return errors.New("shutdown")
 	}
-	err := n.setupConn(fd, flag, msgType, dialDest)
+	err := n.setupConn(fd, flag, dialDest)
 	if err != nil {
 		log.WithFields(logrus.Fields{
 			"id":    fd.RemoteAddr().String(),
@@ -226,7 +237,7 @@ func (n *Network) SetupConn(fd net.Conn, flag connFlag, msgType MsgType, dialDes
 	return nil
 }
 
-func (n *Network) setupConn(fd net.Conn, flag connFlag, msgType MsgType, dialDest *Node) error {
+func (n *Network) setupConn(fd net.Conn, flag connFlag, dialDest *Node) error {
 	n.lock.Lock()
 	running := n.running
 	n.lock.Unlock()
@@ -235,69 +246,62 @@ func (n *Network) setupConn(fd net.Conn, flag connFlag, msgType MsgType, dialDes
 	}
 
 	if flag == inboundConn {
+		conn := NewConnection(fd, n, n.host)
+		if conn == nil {
+			return failedNewConnection
+		}
 
-		// inbound conn
-		n.Accept(fd)
-		peer := newPeer(NewConnection(fd, n, n.host))
-		n.peers[peer.ID] = peer
-		log.WithFields(logrus.Fields{
-			"addr": fd.RemoteAddr().String(),
-			"conn": flag,
-		}).Info("accept connection")
+		err := n.Accept(conn)
+		if err != nil {
+			return err
+		}
+
+		existConn, err := n.host.GetConnection(conn.remotePeer)
+		if err != nil {
+			return err
+		}
+		if conn == existConn {
+			peer := newPeer(conn)
+			n.peers[peer.ID] = peer
+
+			// when success to accept conn,notify dht the remote peer ID
+			n.dht.GetRecvchan() <- conn.remotePeer
+			log.WithFields(logrus.Fields{
+				"addr": fd.RemoteAddr().String(),
+				"conn": flag,
+			}).Info("accept connection")
+		}
 	} else {
 
 		// outbound conn
-		n.DoProtocol(dialDest, msgType)
+
 	}
 	return nil
 }
 
-func (n *Network) DoProtocol(dest *Node, msgType MsgType) {
-	for {
-		switch msgType {
-		case msg_handshake:
-			// NewHandshake(n.host)
-		case msg_dht:
-			selfID := dht.CreateID(n.ListenAddr, n.host.ID().PublicKey)
-			dht := dht.NewDHT(n.host, defaultDBPath, selfID)
-			dht.Start()
-			select {
-			case <-n.quit:
-				dht.Stop()
-			}
-		case msg_chain:
-			// NewChain(n.host)
-		}
-	}
-}
-
 // Accept connection
 // FIXME: reference implementation
-func (n *Network) Accept(incoming net.Conn) {
-	conn := NewConnection(incoming, n, n.host)
-
+func (n *Network) Accept(conn p2p.Conn) error {
 	defer func() {
-		if incoming != nil {
-			incoming.Close()
+		if conn != nil {
+			conn.Close()
 		}
 	}()
 
-	for {
-		msg, err := conn.ReadMessage()
-		if err != nil {
-			log.Error(err)
-			break
-		}
-
-		err = n.dispatchMessage(conn, msg)
-
-		if err != nil {
-			log.Error(err)
-			break
-		}
+	msg, err := conn.ReadMessage()
+	if err != nil {
+		log.Error(err)
+		return err
 	}
 
-	fmt.Println("exit loop for connection")
+	err = n.dispatchMessage(conn, msg)
+
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	return nil
 }
 
 // dispatch message according to protocol

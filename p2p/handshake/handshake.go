@@ -1,12 +1,11 @@
-package handshake 
+package handshake
 
 import (
 	"context"
 
-	"github.com/invin/kkchain/p2p"
-	"github.com/invin/kkchain/p2p/handshake/pb"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/glog"
+	"github.com/invin/kkchain/p2p"
 )
 
 const (
@@ -21,7 +20,7 @@ type Handshake struct {
 
 // NewHandshake creates a new Handshake object with the given peer as as the 'local' host
 func NewHandshake(host p2p.Host) *Handshake {
-	hs := &Handshake {
+	hs := &Handshake{
 		host: host,
 	}
 
@@ -36,22 +35,22 @@ func NewHandshake(host p2p.Host) *Handshake {
 func (hs *Handshake) handleNewStream(s p2p.Stream, msg proto.Message) {
 	// check message type
 	switch message := msg.(type) {
-	case *pb.Message:
+	case *Message:
 		hs.handleMessage(s, message)
 	default:
 		s.Reset()
 		glog.Errorf("unexpected message: %v", msg)
-	}	
+	}
 }
 
-// handleMessage handles messsage 
-func (hs *Handshake) handleMessage(s p2p.Stream, msg *pb.Message) {
+// handleMessage handles messsage
+func (hs *Handshake) handleMessage(s p2p.Stream, msg *Message) {
 	// get handler
 	handler := hs.handlerForMsgType(msg.GetType())
 	if handler == nil {
 		s.Reset()
 		glog.Errorf("unknown message type: %v", msg.GetType())
-		return	
+		return
 	}
 
 	// dispatch handler

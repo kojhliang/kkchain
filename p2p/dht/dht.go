@@ -6,7 +6,6 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/glog"
 	"github.com/invin/kkchain/p2p"
-	"github.com/invin/kkchain/p2p/dht/pb"
 	"github.com/invin/kkchain/p2p/impl"
 	"github.com/libp2p/go-libp2p-crypto"
 )
@@ -27,6 +26,10 @@ type DHT struct {
 	self           PeerID
 	selfPrivateKey crypto.PrivKey
 	recvCh         chan interface{}
+}
+
+func (dht *DHT) GetRecvchan() chan interface{} {
+	return dht.recvCh
 }
 
 // NewDHT creates a new DHT object with the given peer as as the 'local' host
@@ -90,7 +93,7 @@ func selfPeerID(config *Config) (*PeerID, crypto.PrivKey, error) {
 func (dht *DHT) handleNewStream(s p2p.Stream, msg proto.Message) {
 	// check message type
 	switch message := msg.(type) {
-	case *pb.Message:
+	case *Message:
 		dht.handleMessage(s, message)
 	default:
 		s.Reset()
@@ -99,7 +102,7 @@ func (dht *DHT) handleNewStream(s p2p.Stream, msg proto.Message) {
 }
 
 // handleMessage handles messsage
-func (dht *DHT) handleMessage(s p2p.Stream, msg *pb.Message) {
+func (dht *DHT) handleMessage(s p2p.Stream, msg *Message) {
 	// get handler
 	handler := dht.handlerForMsgType(msg.GetType())
 	if handler == nil {

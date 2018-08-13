@@ -4,36 +4,35 @@ import (
 	"context"
 
 	"github.com/invin/kkchain/p2p"
-	"github.com/invin/kkchain/p2p/handshake/pb"
 )
 
 // handshakeHandler specifies the signature of functions that handle DHT messages.
-type handshakeHandler func(context.Context, p2p.ID, *pb.Message) (*pb.Message, error)
+type handshakeHandler func(context.Context, p2p.ID, *Message) (*Message, error)
 
-func (hs *Handshake) handlerForMsgType(t pb.Message_Type) handshakeHandler {
+func (hs *Handshake) handlerForMsgType(t Message_Type) handshakeHandler {
 	switch t {
-	case pb.Message_HELLO:
+	case Message_HELLO:
 		return hs.handleHello
-	case pb.Message_HELLO_OK:
+	case Message_HELLO_OK:
 		return hs.handleHelloOK
-	case pb.Message_HELLO_ERROR:
+	case Message_HELLO_ERROR:
 		return hs.handleHelloError
 	default:
 		return nil
 	}
 }
 
-func (hs *Handshake) handleHello(ctx context.Context, p p2p.ID, pmes *pb.Message) (_ *pb.Message, err error) {
+func (hs *Handshake) handleHello(ctx context.Context, p p2p.ID, pmes *Message) (_ *Message, err error) {
 	// Check result and return corresponding code
 	ok := true
-	var resp *pb.Message
+	var resp *Message
 
 	if ok {
-		resp = pb.NewMessage(pb.Message_HELLO_OK)
+		resp = NewMessage(Message_HELLO_OK)
 		// TODO: fill with local info to finish handshaking
-		pb.BuildHandshake(resp)
+		BuildHandshake(resp)
 	} else {
-		resp = pb.NewMessage(pb.Message_HELLO_ERROR)
+		resp = NewMessage(Message_HELLO_ERROR)
 		// TODO: set error info
 		// resp.Error.code = XXX
 		// resp.Error.desc = "balabla"
@@ -42,14 +41,14 @@ func (hs *Handshake) handleHello(ctx context.Context, p p2p.ID, pmes *pb.Message
 	return resp, nil
 }
 
-func (hs *Handshake) handleHelloOK(ctx context.Context, p p2p.ID, pmes *pb.Message) (_ *pb.Message, err error) {
+func (hs *Handshake) handleHelloOK(ctx context.Context, p p2p.ID, pmes *Message) (_ *Message, err error) {
 
 	// TODO: handle received handshake info
 
 	return nil, nil
 }
 
-func (hs *Handshake) handleHelloError(ctx context.Context, p p2p.ID, pmes *pb.Message) (_ *pb.Message, err error) {
+func (hs *Handshake) handleHelloError(ctx context.Context, p p2p.ID, pmes *Message) (_ *Message, err error) {
 
 	// TODO: handle error
 
