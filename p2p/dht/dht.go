@@ -6,7 +6,6 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/glog"
 	"github.com/invin/kkchain/p2p"
-	"github.com/invin/kkchain/p2p/impl"
 	"github.com/libp2p/go-libp2p-crypto"
 )
 
@@ -33,7 +32,7 @@ func (dht *DHT) GetRecvchan() chan interface{} {
 }
 
 // NewDHT creates a new DHT object with the given peer as as the 'local' host
-func NewDHT(config *Config) *DHT {
+func NewDHT(config *Config, host p2p.Host) *DHT {
 
 	// If no node database was given, use an in-memory one
 	db, err := newPeerStore(config.RoutingTableDir)
@@ -56,20 +55,13 @@ func NewDHT(config *Config) *DHT {
 		recvCh:         make(chan interface{}),
 	}
 
-	initNetwork(config, dht)
+	dht.host = host
 
 	if err := dht.host.SetStreamHandler(protocolDHT, dht.handleNewStream); err != nil {
 		panic(err)
 	}
 
 	return dht
-}
-
-//initNetwork init network and related config before startup
-func initNetwork(config *Config, dht *DHT) {
-	//TODO: new server & and set to dht
-
-	dht.host = impl.NewHost(dht.self.ID)
 }
 
 // selfPeerID get local peer info

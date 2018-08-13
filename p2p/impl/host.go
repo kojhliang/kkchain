@@ -114,18 +114,19 @@ func (h *Host) Connect(address string) error {
 	}
 	msg := handshake.NewMessage(handshake.Message_HELLO)
 	handshake.BuildHandshake(msg)
-	h.SendMsg(fd, network, msg)
+	conn := NewConnection(fd, network, h)
+	if conn == nil {
+		return failedNewNetwork
+	}
+
+	h.SendMsg(conn, "/kkchain/p2p/handshake/1.0.0", msg)
 
 	return nil
 }
 
 // SendMsg sends single msg
-func (h *Host) SendMsg(fd net.Conn, network p2p.Network, msg proto.Message) {
-	conn := NewConnection(fd, network, h)
-	if conn == nil {
-		return
-	}
-	stream := NewStream(conn, "")
+func (h *Host) SendMsg(conn p2p.Conn, protocol string, msg proto.Message) {
+	stream := NewStream(conn, protocol)
 	if stream != nil {
 		stream.Write(msg)
 	}

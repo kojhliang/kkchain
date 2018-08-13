@@ -95,8 +95,8 @@ func (m *Message) GetType() Message_Type {
 }
 
 func init() {
-	proto.RegisterType((*Message)(nil), "pb.Message")
-	proto.RegisterEnum("pb.Message_Type", Message_Type_name, Message_Type_value)
+	proto.RegisterType((*Message)(nil), "chain.Message")
+	proto.RegisterEnum("chain.Message_Type", Message_Type_name, Message_Type_value)
 }
 func (this *Message) VerboseEqual(that interface{}) error {
 	if that == nil {

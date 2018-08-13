@@ -10,14 +10,14 @@ import (
 )
 
 var (
-	goPath 		= os.Getenv("GOPATH")
+	goPath = os.Getenv("GOPATH")
 )
 
 const (
-	currentDir 	= "."				// Current directory
-	vendorDir 	= "vendor"			// Vendor directory
-	protoExt 	= ".proto"			// Proto file extension
-	protoc 		= "protoc"			// Proto compiler
+	currentDir = "."      // Current directory
+	vendorDir  = "vendor" // Vendor directory
+	protoExt   = ".proto" // Proto file extension
+	protoc     = "protoc" // Proto compiler
 )
 
 func main() {
@@ -33,9 +33,9 @@ func generateProtos(dir string) error {
 			return filepath.SkipDir
 		}
 
-		// Find all the protobuf files 
+		// Find all the protobuf files
 		if filepath.Ext(path) == protoExt {
-			// Prepare the args 
+			// Prepare the args
 			args := []string{
 				"-I=.",
 				fmt.Sprintf("-I=%s", filepath.Join(goPath, "src")),

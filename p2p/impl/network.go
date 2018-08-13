@@ -46,9 +46,9 @@ type Network struct {
 	keys *crypto.KeyPair
 
 	dht            *dht.DHT
-	peers          map[p2p.ID]*Peer
+	peers          map[string]*Peer
 	BootstrapNodes []*Node
-	ListenAddr     string
+	listenAddr     string
 	running        bool
 	quit           chan struct{}
 	lock           sync.Mutex
@@ -61,9 +61,10 @@ func NewNetwork(address string, conf p2p.Config) *Network {
 	id := p2p.CreateID(address, keys.PublicKey)
 
 	return &Network{
-		conf: conf,
-		host: NewHost(id),
-		keys: keys,
+		conf:       conf,
+		host:       NewHost(id),
+		keys:       keys,
+		listenAddr: address,
 	}
 }
 
@@ -73,7 +74,7 @@ func (n *Network) Self() *Node {
 	if !n.running {
 		return nil
 	}
-	return n.makeSelf(n.ListenAddr)
+	return n.makeSelf(n.listenAddr)
 }
 
 func (n *Network) makeSelf(listenAddr string) *Node {
@@ -112,8 +113,8 @@ func (n *Network) Start() error {
 	chain.NewChain(n.host)
 	// set host to handle dht msg,and run dht
 	config := dht.DefaultConfig()
-	config.Listen = n.ListenAddr
-	n.dht = dht.NewDHT(config)
+	config.Listen = n.listenAddr
+	n.dht = dht.NewDHT(config, n.host)
 
 	// do dht
 	go func() {
@@ -127,7 +128,7 @@ func (n *Network) Start() error {
 	// TODO:process chain sync
 
 	// listen
-	if n.ListenAddr != "" {
+	if n.listenAddr != "" {
 		if err := n.startListening(); err != nil {
 			return err
 		}
@@ -162,12 +163,12 @@ func (n *Network) Stop() {
 }
 
 func (n *Network) startListening() error {
-	listener, err := net.Listen("tcp", n.ListenAddr)
+	listener, err := net.Listen("tcp", n.listenAddr)
 	if err != nil {
 		return err
 	}
 	laddr := listener.Addr().(*net.TCPAddr)
-	n.ListenAddr = laddr.String()
+	n.listenAddr = laddr.String()
 	n.loopWG.Add(1)
 	go n.listenLoop(listener)
 	return nil
@@ -262,7 +263,7 @@ func (n *Network) setupConn(fd net.Conn, flag connFlag, dialDest *Node) error {
 		}
 		if conn == existConn {
 			peer := newPeer(conn)
-			n.peers[peer.ID] = peer
+			n.peers[string(peer.ID.PublicKey)] = peer
 
 			// when success to accept conn,notify dht the remote peer ID
 			n.dht.GetRecvchan() <- conn.remotePeer

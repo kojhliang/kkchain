@@ -336,11 +336,11 @@ func (m *Message_Peer) GetConnection() Message_ConnectionType {
 }
 
 func init() {
-	proto.RegisterType((*Record)(nil), "pb.Record")
-	proto.RegisterType((*Message)(nil), "pb.Message")
-	proto.RegisterType((*Message_Peer)(nil), "pb.Message.Peer")
-	proto.RegisterEnum("pb.Message_Type", Message_Type_name, Message_Type_value)
-	proto.RegisterEnum("pb.Message_ConnectionType", Message_ConnectionType_name, Message_ConnectionType_value)
+	proto.RegisterType((*Record)(nil), "dht.Record")
+	proto.RegisterType((*Message)(nil), "dht.Message")
+	proto.RegisterType((*Message_Peer)(nil), "dht.Message.Peer")
+	proto.RegisterEnum("dht.Message_Type", Message_Type_name, Message_Type_value)
+	proto.RegisterEnum("dht.Message_ConnectionType", Message_ConnectionType_name, Message_ConnectionType_value)
 }
 func (this *Record) VerboseEqual(that interface{}) error {
 	if that == nil {
