@@ -9,6 +9,8 @@ import (
 
 	"strings"
 
+	"encoding/hex"
+
 	"github.com/gogo/protobuf/types"
 	"github.com/invin/kkchain/crypto"
 	"github.com/invin/kkchain/crypto/ed25519"
@@ -185,7 +187,18 @@ running:
 			if conn, _ := n.host.GetConnection(node.ID); conn != nil {
 				continue
 			}
-			go n.host.Connect(node.Addr())
+			go func() {
+				conn, err := n.host.Connect(node.Addr())
+				if err != nil {
+					log.WithFields(logrus.Fields{
+						"address": node.Addr(),
+						"nodeID":  hex.EncodeToString(node.ID.PublicKey),
+					}).Error("failed to connect boost node")
+				}
+				msg := handshake.NewMessage(handshake.Message_HELLO)
+				handshake.BuildHandshake(msg)
+				n.host.SendMsg(conn, "/kkchain/p2p/handshake/1.0.0", msg)
+			}()
 		}
 		select {
 		case <-n.quit:

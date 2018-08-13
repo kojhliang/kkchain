@@ -7,7 +7,6 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/invin/kkchain/p2p"
-	"github.com/invin/kkchain/p2p/handshake"
 )
 
 // Host defines a host for connections
@@ -103,25 +102,20 @@ func (h *Host) ID() p2p.ID {
 }
 
 // Connect connects to remote peer
-func (h *Host) Connect(address string) error {
+func (h *Host) Connect(address string) (p2p.Conn, error) {
 	fd, err := net.Dial("tcp", address)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	network := NewNetwork(h.id.Address, p2p.Config{})
 	if network == nil {
-		return failedNewNetwork
+		return nil, failedNewNetwork
 	}
-	msg := handshake.NewMessage(handshake.Message_HELLO)
-	handshake.BuildHandshake(msg)
 	conn := NewConnection(fd, network, h)
 	if conn == nil {
-		return failedNewNetwork
+		return nil, failedNewConnection
 	}
-
-	h.SendMsg(conn, "/kkchain/p2p/handshake/1.0.0", msg)
-
-	return nil
+	return conn, nil
 }
 
 // SendMsg sends single msg

@@ -101,7 +101,7 @@ func (dht *DHT) FindTargetNeighbours(target []byte, peer PeerID) {
 
 	//TODO: dial remote peer???
 	if conn == nil {
-		err = dht.host.Connect(peer.ID.Address)
+		conn, err = dht.host.Connect(peer.ID.Address)
 		if err != nil {
 			return
 		}
