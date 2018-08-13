@@ -107,6 +107,7 @@ func (n *Network) Start() error {
 		return fmt.Errorf("Server.PrivateKey must be set to a non-nil key")
 	}
 
+	n.peers = make(map[string]*Peer)
 	n.quit = make(chan struct{})
 
 	// init handshake msg handler

@@ -8,15 +8,41 @@ import (
 
 // SerializeMessage serializes the message bytes for cryptographic signing purposes.
 func SerializeMessage(id *protobuf.ID, message []byte) []byte {
+	//const uint32Size = 4
+	//serialized := make([]byte, uint32Size+len(id.Address)+uint32Size+len(id.PublicKey)+uint32Size+len(message))
+	//
+	//buffer := serialized[:]
+	//buffer = appendElement(buffer, []byte(id.Address))
+	//buffer = appendElement(buffer, []byte(id.PublicKey))
+	//buffer = appendElement(buffer, []byte(message))
+	//
+	//if 0 != cap(buffer) {
+	//	panic("internal error: invalid serialization output")
+	//}
+	//
+	//return serialized
+
 	const uint32Size = 4
-	serialized := make([]byte, uint32Size+len(id.Address)+uint32Size+len(id.PublicKey)+uint32Size+len(message))
 
-	buffer := serialized[:]
-	buffer = appendElement(buffer, []byte(id.Address))
-	buffer = appendElement(buffer, []byte(id.PublicKey))
-	buffer = appendElement(buffer, []byte(message))
+	serialized := make([]byte, uint32Size+len(id.Address)+uint32Size+len(id.PublicKey)+len(message))
+	pos := 0
 
-	if 0 != cap(buffer) {
+	binary.LittleEndian.PutUint32(serialized[pos:], uint32(len(id.Address)))
+	pos += uint32Size
+
+	copy(serialized[pos:], []byte(id.Address))
+	pos += len(id.Address)
+
+	binary.LittleEndian.PutUint32(serialized[pos:], uint32(len(id.PublicKey)))
+	pos += uint32Size
+
+	copy(serialized[pos:], id.PublicKey)
+	pos += len(id.PublicKey)
+
+	copy(serialized[pos:], message)
+	pos += len(message)
+
+	if pos != len(serialized) {
 		panic("internal error: invalid serialization output")
 	}
 

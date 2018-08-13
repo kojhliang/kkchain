@@ -58,6 +58,9 @@ func (hs *Handshake) handleMessage(s p2p.Stream, msg *Message) {
 	ctx := context.Background()
 	pid := s.RemotePeer()
 
+	// successfully recv conn, add it
+	hs.host.AddConnection(pid, s.Conn())
+
 	rpmes, err := handler(ctx, pid, msg)
 
 	// if nil response, return it before serializing
@@ -66,9 +69,14 @@ func (hs *Handshake) handleMessage(s p2p.Stream, msg *Message) {
 		return
 	}
 
+	// hello error resp will return err,so reset conn and remove it
+	if err != nil {
+		hs.host.RemoveConnection(pid)
+		s.Reset()
+	}
+
 	// send out response msg
 	if err = s.Write(rpmes); err != nil {
-		s.Reset()
 		glog.Errorf("send response error: %s", err)
 		return
 	}

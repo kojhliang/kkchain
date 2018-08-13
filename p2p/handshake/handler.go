@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/invin/kkchain/p2p"
+	"github.com/pkg/errors"
 )
 
 // handshakeHandler specifies the signature of functions that handle DHT messages.
@@ -31,14 +32,14 @@ func (hs *Handshake) handleHello(ctx context.Context, p p2p.ID, pmes *Message) (
 		resp = NewMessage(Message_HELLO_OK)
 		// TODO: fill with local info to finish handshaking
 		BuildHandshake(resp)
-	} else {
-		resp = NewMessage(Message_HELLO_ERROR)
-		// TODO: set error info
-		// resp.Error.code = XXX
-		// resp.Error.desc = "balabla"
+		return resp, nil
 	}
+	resp = NewMessage(Message_HELLO_ERROR)
+	// TODO: set error info
+	// resp.Error.code = XXX
+	// resp.Error.desc = "balabla"
 
-	return resp, nil
+	return resp, errors.New("hello error")
 }
 
 func (hs *Handshake) handleHelloOK(ctx context.Context, p p2p.ID, pmes *Message) (_ *Message, err error) {

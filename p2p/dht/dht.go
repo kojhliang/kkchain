@@ -169,7 +169,7 @@ func (dht *DHT) waitReceive() {
 	for {
 		select {
 		case msg := <-dht.recvCh:
-			fmt.Println(msg)
+			fmt.Println("p2p server notify:", msg)
 		}
 	}
 }
