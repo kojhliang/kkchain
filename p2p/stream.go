@@ -4,7 +4,6 @@ import (
 	"github.com/gogo/protobuf/proto"
 )
 
-
 // Stream defines interface for reading and writing pb messages
 type Stream interface {
 	// Write message
@@ -26,8 +25,3 @@ type Stream interface {
 // StreamHandler is the type of function used to listen for
 // streams opened by the remote side.
 type StreamHandler func(Stream, proto.Message)
-
-
-
-
-

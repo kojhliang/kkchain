@@ -111,7 +111,7 @@ func (n *Network) Start() error {
 	// init chain msg handler
 	chain.NewChain(n.host)
 	// set host to handle dht msg,and run dht
-	config := dht.DefaultConfig()
+	config := p2p.DefaultConfig()
 	config.Listen = n.ListenAddr
 	n.dht = dht.NewDHT(config)
 

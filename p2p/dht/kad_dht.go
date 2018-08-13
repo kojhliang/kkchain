@@ -7,7 +7,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/invin/kkchain/p2p/impl"
+	"github.com/invin/kkchain/p2p"
 )
 
 //type DHT struct {
@@ -46,10 +46,10 @@ func (dht *DHT) Stop() {
 func (dht *DHT) syncLoop() {
 
 	//TODO: config timer
-	syncLoopTicker := time.NewTicker(DefaultSyncTableInterval)
+	syncLoopTicker := time.NewTicker(p2p.DefaultSyncTableInterval)
 	defer syncLoopTicker.Stop()
 
-	saveTableToStore := time.NewTicker(DefaultSaveTableInterval)
+	saveTableToStore := time.NewTicker(p2p.DefaultSaveTableInterval)
 	defer saveTableToStore.Stop()
 
 	for {
@@ -110,11 +110,11 @@ func (dht *DHT) FindTargetNeighbours(target []byte, peer PeerID) {
 	}
 
 	//send find neighbours request to peer
-	stream := impl.NewStream(conn, protocolDHT)
-	pmes := NewMessage(Message_FIND_NODE, hex.EncodeToString(target))
-
-	smes, err := conn.PrepareMessage(pmes)
-	stream.Conn().WriteMessage(smes)
+	//stream := impl.NewStream(conn, protocolDHT)
+	//pmes := pb.NewMessage(pb.Message_FIND_NODE, hex.EncodeToString(target))
+	//
+	//smes, err := conn.PrepareMessage(pmes)
+	//stream.Conn().WriteMessage(smes)
 
 }
 
@@ -151,7 +151,7 @@ func (dht *DHT) SyncRouteTable() {
 		return
 	}
 
-	peersCountToSync := DefaultMaxPeersCountToSync
+	peersCountToSync := p2p.DefaultMaxPeersCountToSync
 	if peersCount < peersCountToSync {
 		peersCountToSync = peersCount
 	}
@@ -170,7 +170,7 @@ func (dht *DHT) saveTableToStore() {
 	peers := dht.table.GetPeers()
 	now := time.Now()
 	for _, v := range peers {
-		if now.Sub(v.addTime) > DefaultSeedMinTableTime {
+		if now.Sub(v.addTime) > p2p.DefaultSeedMinTableTime {
 			dht.store.Update(&v)
 		}
 	}

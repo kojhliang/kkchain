@@ -1,4 +1,4 @@
-package impl 
+package impl
 
 import (
 	"encoding/binary"
@@ -6,12 +6,11 @@ import (
 	"github.com/invin/kkchain/p2p/protobuf"
 )
 
-
 // SerializeMessage serializes the message bytes for cryptographic signing purposes.
 func SerializeMessage(id *protobuf.ID, message []byte) []byte {
 	const uint32Size = 4
 	serialized := make([]byte, uint32Size+len(id.Address)+uint32Size+len(id.PublicKey)+uint32Size+len(message))
-	
+
 	buffer := serialized[:]
 	buffer = appendElement(buffer, []byte(id.Address))
 	buffer = appendElement(buffer, []byte(id.PublicKey))
@@ -32,7 +31,7 @@ func DeserializeMessage(in []byte) (protobuf.ID, []byte) {
 
 	id := protobuf.ID{
 		PublicKey: publicKey,
-		Address: string(address),
+		Address:   string(address),
 	}
 
 	return id, message
@@ -45,7 +44,7 @@ func appendElement(buffer, element []byte) []byte {
 	// write length
 	binary.LittleEndian.PutUint32(buffer[pos:], uint32(len(element)))
 	pos += uint32Size
-	
+
 	// write body
 	copy(buffer[pos:], element)
 	pos += len(element)
@@ -69,4 +68,3 @@ func getElement(buffer []byte) ([]byte, []byte) {
 
 	return buffer[pos:], body
 }
-

@@ -1,4 +1,4 @@
-package impl 
+package impl
 
 import (
 	"bytes"
@@ -14,14 +14,14 @@ func TestSerialization(t *testing.T) {
 	keys := ed25519.RandomKeyPair()
 	address := "localhost:12345"
 	id := p2p.CreateID(address, keys.PublicKey)
-	
+
 	pid := protobuf.ID(id)
 	message := "message1"
 
 	out := SerializeMessage(&pid, []byte(message))
 	t.Log("result =", out)
 
-	rid, rmsg:= DeserializeMessage(out)
+	rid, rmsg := DeserializeMessage(out)
 
 	if rid.Address != address {
 		t.Errorf("expected %v, actual %v", address, rid.Address)

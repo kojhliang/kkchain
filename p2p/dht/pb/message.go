@@ -1,4 +1,4 @@
-package dht
+package pb
 
 import (
 	"github.com/invin/kkchain/p2p"

@@ -4,15 +4,14 @@ import (
 	"io"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/invin/kkchain/crypto"
 	"github.com/invin/kkchain/p2p/protobuf"
 )
 
-// Config defines configurations for a basic network instance
-type Config struct {
-	SignaturePolicy crypto.SignaturePolicy
-	HashPolicy      crypto.HashPolicy
-}
+//// Config defines configurations for a basic network instance
+//type Config struct {
+//	SignaturePolicy crypto.SignaturePolicy
+//	HashPolicy      crypto.HashPolicy
+//}
 
 // Network defines the interface for network communication
 type Network interface {

@@ -1,7 +1,9 @@
-package dht
+package p2p
 
 import (
 	"time"
+
+	"github.com/invin/kkchain/crypto"
 )
 
 const (
@@ -20,8 +22,11 @@ type NetworkConfig struct {
 	PrivateKeyPath  string
 	MaxPeers        int
 	MaxPendingPeers int
-	BootstrapNodes  []peeraddr
+	BootstrapNodes  []string
 	Listen          string
+
+	SignaturePolicy crypto.SignaturePolicy
+	HashPolicy      crypto.HashPolicy
 }
 
 type TableConfig struct {
@@ -40,7 +45,7 @@ func DefaultConfig() *Config {
 	}
 
 	tableConfig := TableConfig{
-		BucketSize:      BucketSize,
+		BucketSize:      16,
 		RoutingTableDir: "",
 	}
 

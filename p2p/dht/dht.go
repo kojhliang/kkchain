@@ -6,7 +6,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/glog"
 	"github.com/invin/kkchain/p2p"
-	"github.com/invin/kkchain/p2p/impl"
+	"github.com/invin/kkchain/p2p/dht/pb"
 	"github.com/libp2p/go-libp2p-crypto"
 )
 
@@ -22,7 +22,7 @@ type DHT struct {
 	quitCh         chan bool
 	table          *RoutingTable
 	store          *PeerStore
-	config         *Config
+	config         *p2p.Config
 	self           PeerID
 	selfPrivateKey crypto.PrivKey
 	recvCh         chan interface{}
@@ -33,7 +33,7 @@ func (dht *DHT) GetRecvchan() chan interface{} {
 }
 
 // NewDHT creates a new DHT object with the given peer as as the 'local' host
-func NewDHT(config *Config) *DHT {
+func NewDHT(config *p2p.Config) *DHT {
 
 	// If no node database was given, use an in-memory one
 	db, err := newPeerStore(config.RoutingTableDir)
@@ -56,7 +56,7 @@ func NewDHT(config *Config) *DHT {
 		recvCh:         make(chan interface{}),
 	}
 
-	initNetwork(config, dht)
+	//initNetwork(config, dht)
 
 	if err := dht.host.SetStreamHandler(protocolDHT, dht.handleNewStream); err != nil {
 		panic(err)
@@ -66,14 +66,14 @@ func NewDHT(config *Config) *DHT {
 }
 
 //initNetwork init network and related config before startup
-func initNetwork(config *Config, dht *DHT) {
-	//TODO: new server & and set to dht
-
-	dht.host = impl.NewHost(dht.self.ID)
-}
+//func initNetwork(config *p2p.Config, dht *DHT) {
+//	//TODO: new server & and set to dht
+//
+//	//dht.host = impl.NewHost(dht.self.ID)
+//}
 
 // selfPeerID get local peer info
-func selfPeerID(config *Config) (*PeerID, crypto.PrivKey, error) {
+func selfPeerID(config *p2p.Config) (*PeerID, crypto.PrivKey, error) {
 
 	peerKey, err := LoadNetworkKeyFromFileOrCreateNew(config.PrivateKeyPath)
 	if err != nil {
@@ -89,11 +89,19 @@ func selfPeerID(config *Config) (*PeerID, crypto.PrivKey, error) {
 	return &id, peerKey, nil
 }
 
+func (dht *DHT) Self() PeerID {
+	return dht.self
+}
+
+func (dht *DHT) SetHost(host p2p.Host) {
+	dht.host = host
+}
+
 // handleNewStream handles messages within the stream
 func (dht *DHT) handleNewStream(s p2p.Stream, msg proto.Message) {
 	// check message type
 	switch message := msg.(type) {
-	case *Message:
+	case *pb.Message:
 		dht.handleMessage(s, message)
 	default:
 		s.Reset()
@@ -102,7 +110,7 @@ func (dht *DHT) handleNewStream(s p2p.Stream, msg proto.Message) {
 }
 
 // handleMessage handles messsage
-func (dht *DHT) handleMessage(s p2p.Stream, msg *Message) {
+func (dht *DHT) handleMessage(s p2p.Stream, msg *pb.Message) {
 	// get handler
 	handler := dht.handlerForMsgType(msg.GetType())
 	if handler == nil {
