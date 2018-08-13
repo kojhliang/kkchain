@@ -209,9 +209,9 @@ func (m *Message) GetError() *Error {
 }
 
 func init() {
-	proto.RegisterType((*Error)(nil), "pb.Error")
-	proto.RegisterType((*Message)(nil), "pb.Message")
-	proto.RegisterEnum("pb.Message_Type", Message_Type_name, Message_Type_value)
+	proto.RegisterType((*Error)(nil), "handshake.Error")
+	proto.RegisterType((*Message)(nil), "handshake.Message")
+	proto.RegisterEnum("handshake.Message_Type", Message_Type_name, Message_Type_value)
 }
 func (this *Error) VerboseEqual(that interface{}) error {
 	if that == nil {

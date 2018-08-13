@@ -1,8 +1,6 @@
 package p2p
 
 import (
-	"net"
-
 	"github.com/gogo/protobuf/proto"
 )
 
@@ -34,7 +32,7 @@ type Host interface {
 	// Connect to remote peer
 	Connect(address string) error
 
-	SendMsg(fd net.Conn, network Network, msg proto.Message)
+	SendMsg(conn Conn, protocol string, msg proto.Message)
 
 	// Set stream handler
 	SetStreamHandler(protocol string, handler StreamHandler) error

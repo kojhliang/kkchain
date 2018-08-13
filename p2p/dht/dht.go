@@ -33,7 +33,7 @@ func (dht *DHT) GetRecvchan() chan interface{} {
 }
 
 // NewDHT creates a new DHT object with the given peer as as the 'local' host
-func NewDHT(config *p2p.Config) *DHT {
+func NewDHT(config *Config, host p2p.Host) *DHT {
 
 	// If no node database was given, use an in-memory one
 	db, err := newPeerStore(config.RoutingTableDir)
@@ -56,7 +56,7 @@ func NewDHT(config *p2p.Config) *DHT {
 		recvCh:         make(chan interface{}),
 	}
 
-	//initNetwork(config, dht)
+	dht.host = host
 
 	if err := dht.host.SetStreamHandler(protocolDHT, dht.handleNewStream); err != nil {
 		panic(err)

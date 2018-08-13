@@ -110,12 +110,8 @@ func (dht *DHT) FindTargetNeighbours(target []byte, peer PeerID) {
 	}
 
 	//send find neighbours request to peer
-	//stream := impl.NewStream(conn, protocolDHT)
-	//pmes := pb.NewMessage(pb.Message_FIND_NODE, hex.EncodeToString(target))
-	//
-	//smes, err := conn.PrepareMessage(pmes)
-	//stream.Conn().WriteMessage(smes)
-
+	pmes := NewMessage(Message_FIND_NODE, hex.EncodeToString(target))
+	dht.host.SendMsg(conn, protocolDHT, pmes)
 }
 
 // RandomTargetID generate random peer id for query target
