@@ -9,6 +9,8 @@ import (
 
 	"strings"
 
+	"encoding/hex"
+
 	"github.com/gogo/protobuf/types"
 	"github.com/invin/kkchain/crypto"
 	"github.com/invin/kkchain/crypto/ed25519"
@@ -185,7 +187,23 @@ running:
 			if conn, _ := n.host.GetConnection(node.ID); conn != nil {
 				continue
 			}
-			go n.host.Connect(node.Addr())
+			go func() {
+				conn, err := n.host.Connect(node.Addr())
+				if err != nil {
+					log.WithFields(logrus.Fields{
+						"address": node.Addr(),
+						"nodeID":  hex.EncodeToString(node.ID.PublicKey),
+					}).Error("failed to connect boost node")
+				} else {
+					log.WithFields(logrus.Fields{
+						"address": node.Addr(),
+						"nodeID":  hex.EncodeToString(node.ID.PublicKey),
+					}).Info("success to connect boost node")
+					msg := handshake.NewMessage(handshake.Message_HELLO)
+					handshake.BuildHandshake(msg)
+					n.host.SendMsg(conn, "/kkchain/p2p/handshake/1.0.0", msg)
+				}
+			}()
 		}
 		select {
 		case <-n.quit:
@@ -230,8 +248,8 @@ func (n *Network) SetupConn(fd net.Conn, flag connFlag, dialDest *Node) error {
 	err := n.setupConn(fd, flag, dialDest)
 	if err != nil {
 		log.WithFields(logrus.Fields{
-			"id":    fd.RemoteAddr().String(),
-			"error": err,
+			"address": fd.RemoteAddr().String(),
+			"error":   err,
 		}).Error("failed to set up connection")
 		return err
 	}
@@ -263,7 +281,7 @@ func (n *Network) setupConn(fd net.Conn, flag connFlag, dialDest *Node) error {
 		}
 		if conn == existConn {
 			peer := newPeer(conn)
-			n.peers[string(peer.ID.PublicKey)] = peer
+			n.peers[hex.EncodeToString(peer.ID.PublicKey)] = peer
 
 			// when success to accept conn,notify dht the remote peer ID
 			n.dht.GetRecvchan() <- conn.remotePeer

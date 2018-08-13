@@ -20,11 +20,11 @@ const (
 	protoc     = "protoc" // Proto compiler
 )
 
-func main() {
-	if err := generateProtos(currentDir); err != nil {
-		fmt.Printf("%+v", err)
-	}
-}
+//func main() {
+//	if err := generateProtos(currentDir); err != nil {
+//		fmt.Printf("%+v", err)
+//	}
+//}
 
 func generateProtos(dir string) error {
 	return filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {

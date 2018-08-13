@@ -142,7 +142,7 @@ func (c *Connection) ReadMessage() (*protobuf.Message, error) {
 
 	// Firstly, read the length of following message
 	buffer := make([]byte, 4)
-	if err = c.readFull(buffer); err != nil {
+	if err = c.readFull(buffer); err != nil && err != io.EOF {
 		return nil, errors.Wrap(err, "failed to read header of message")
 	}
 

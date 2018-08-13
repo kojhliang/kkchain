@@ -30,7 +30,7 @@ type Host interface {
 	ID() ID
 
 	// Connect to remote peer
-	Connect(address string) error
+	Connect(address string) (Conn, error)
 
 	SendMsg(conn Conn, protocol string, msg proto.Message)
 
