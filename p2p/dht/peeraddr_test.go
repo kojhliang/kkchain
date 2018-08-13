@@ -5,13 +5,14 @@ import (
 
 	"encoding/hex"
 	"fmt"
+	"github.com/invin/kkchain/p2p"
 	crypto "github.com/libp2p/go-libp2p-crypto"
 )
 
 func TestFormatAddr(t *testing.T) {
 	t.Parallel()
 
-	key, _ := GenerateKey(crypto.Secp256k1)
+	key, _ := p2p.GenerateKey(crypto.Secp256k1)
 	pbKey, _ := key.GetPublic().Bytes()
 
 	peerA := CreateID("/ip4/127.0.0.1/tcp/8860", pbKey)

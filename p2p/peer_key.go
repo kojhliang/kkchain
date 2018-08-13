@@ -1,4 +1,4 @@
-package dht
+package p2p
 
 import (
 	"crypto/rand"

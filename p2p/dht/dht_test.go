@@ -1,41 +1,40 @@
-package main
+package dht
 
 import (
 	"encoding/hex"
 	"fmt"
+	"testing"
 	"time"
 
 	"github.com/invin/kkchain/p2p"
-	"github.com/invin/kkchain/p2p/dht"
-
 	"github.com/invin/kkchain/p2p/impl"
 	libcrypto "github.com/libp2p/go-libp2p-crypto"
 )
 
-func main() {
+func TestNewDHT(t *testing.T) {
+	t.Parallel()
 
-	key, _ := dht.GenerateKey(libcrypto.Secp256k1)
+	key, _ := p2p.GenerateKey(libcrypto.Secp256k1)
 	pbKey, _ := key.GetPublic().Bytes()
 	fmt.Printf("key: %v, len: %d\n", hex.EncodeToString(pbKey), len(pbKey))
 
-	peerA := dht.CreateID("/ip4/127.0.0.1/tcp/8860", pbKey)
+	peerA := CreateID("/ip4/127.0.0.1/tcp/8860", pbKey)
 	fmt.Printf("peer A: %s\n", peerA.String())
 
-	kad := dht.NewDHT(p2p.DefaultConfig())
+	host := impl.NewHost(peerA.ID)
 
-	kad.SetHost(impl.NewHost(kad.Self().ID))
+	dht := NewDHT(DefaultConfig(), host)
 
-	key, _ = dht.GenerateKey(libcrypto.Secp256k1)
+	key, _ = p2p.GenerateKey(libcrypto.Secp256k1)
 	pbKey, _ = key.GetPublic().Bytes()
-	peerB := dht.CreateID("/ip4/127.0.0.1/tcp/8861", pbKey)
+	peerB := CreateID("/ip4/127.0.0.1/tcp/8861", pbKey)
 	fmt.Printf("peer B: %s\n", peerB.String())
 
-	kad.AddPeer(peerB)
+	dht.AddPeer(peerB)
 
-	kad.Start()
+	dht.Start()
 
 	time.Sleep(time.Duration(30 * time.Second))
 
-	kad.Stop()
-
+	dht.Stop()
 }
