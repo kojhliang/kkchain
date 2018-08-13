@@ -6,6 +6,8 @@ import (
 	"net"
 
 	"github.com/gogo/protobuf/proto"
+	"github.com/invin/kkchain/crypto/blake2b"
+	"github.com/invin/kkchain/crypto/ed25519"
 	"github.com/invin/kkchain/p2p"
 )
 
@@ -107,7 +109,11 @@ func (h *Host) Connect(address string) (p2p.Conn, error) {
 	if err != nil {
 		return nil, err
 	}
-	network := NewNetwork(h.id.Address, p2p.Config{})
+	config := p2p.Config{
+		SignaturePolicy: ed25519.New(),
+		HashPolicy:      blake2b.New(),
+	}
+	network := NewNetwork(h.id.Address, config)
 	if network == nil {
 		return nil, failedNewNetwork
 	}
