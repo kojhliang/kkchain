@@ -68,5 +68,8 @@ func (p PeerID) PrefixLen() int {
 }
 
 func GetIDFromPublicKey(publicKey []byte) []byte {
-	return sha256.New().Sum(publicKey)
+
+	h := sha256.New()
+	h.Write(publicKey)
+	return h.Sum(nil)
 }

@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"time"
 
+	"encoding/json"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/glog"
 	"github.com/invin/kkchain/p2p"
@@ -18,9 +19,9 @@ const (
 )
 
 const (
-	DefaultSyncTableInterval   = 10 * time.Second
-	DefaultSaveTableInterval   = 2 * time.Minute
-	DefaultSeedMinTableTime    = 6 * time.Minute
+	DefaultSyncTableInterval   = 20 * time.Second
+	DefaultSaveTableInterval   = 1 * time.Minute
+	DefaultSeedMinTableTime    = 50 * time.Second
 	DefaultMaxPeersCountToSync = 6
 )
 
@@ -70,7 +71,6 @@ func NewDHT(config *DHTConfig, network p2p.Network, host p2p.Host) *DHT {
 	dht := &DHT{
 		quitCh: make(chan bool),
 		config: config,
-		//selfPrivateKey: privateKey,
 		self:   self,
 		table:  CreateRoutingTable(self),
 		store:  db,
@@ -135,6 +135,11 @@ func (dht *DHT) handleMessage(s p2p.Stream, msg *Message) {
 }
 
 func (dht *DHT) Start() {
+	dht.loadBootstrapNodes()
+
+	//load table from db
+	dht.loadTableFromDB()
+
 	fmt.Println("start sync loop.....")
 	go dht.syncLoop()
 	go dht.waitReceive()
@@ -143,9 +148,15 @@ func (dht *DHT) Start() {
 func (dht *DHT) Stop() {
 	fmt.Println("stopping sync loop.....")
 	dht.quitCh <- true
+
 }
 
 func (dht *DHT) syncLoop() {
+
+	dht.table.printTable()
+
+	//first sync
+	dht.SyncRouteTable()
 
 	//TODO: config timer
 	syncLoopTicker := time.NewTicker(DefaultSyncTableInterval)
@@ -158,6 +169,7 @@ func (dht *DHT) syncLoop() {
 		select {
 		case <-dht.quitCh:
 			fmt.Println("stopped sync loop")
+			dht.store.Close()
 			return
 		case <-syncLoopTicker.C:
 			dht.SyncRouteTable()
@@ -228,7 +240,10 @@ func (dht *DHT) FindTargetNeighbours(target []byte, peer PeerID) {
 func RandomTargetID() []byte {
 	id := make([]byte, 32)
 	rand.Read(id)
-	return sha256.New().Sum(id)
+
+	h := sha256.New()
+	h.Write(id)
+	return h.Sum(id)
 }
 
 // SyncRouteTable sync route table.
@@ -280,4 +295,28 @@ func (dht *DHT) saveTableToStore() {
 			dht.store.Update(&v)
 		}
 	}
+}
+
+func (dht *DHT) loadBootstrapNodes() {
+	for _, addr := range dht.config.BootstrapNodes {
+		peer, err := ParsePeerAddr(addr)
+		if err != nil {
+			continue
+		}
+
+		dht.table.Update(*peer)
+	}
+}
+
+func (dht *DHT) loadTableFromDB() {
+	it := dht.store.db.NewIterator(nil, nil)
+	for end := false; !end; end = !it.Next() {
+		peer := new(PeerID)
+		err := json.Unmarshal(it.Value(), &peer)
+		if err != nil {
+			continue
+		}
+		dht.table.Update(*peer)
+	}
+
 }

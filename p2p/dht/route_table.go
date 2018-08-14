@@ -2,6 +2,7 @@ package dht
 
 import (
 	"container/list"
+	"fmt"
 	"sort"
 	"sync"
 )
@@ -224,4 +225,18 @@ func (t *RoutingTable) Bucket(id int) *Bucket {
 		return t.buckets[id]
 	}
 	return nil
+}
+
+func (t *RoutingTable) printTable() {
+	fmt.Printf("self = %s\n", t.self)
+	for idx, bucket := range t.buckets {
+		bucket.mutex.RLock()
+
+		for e := bucket.Front(); e != nil; e = e.Next() {
+			id := e.Value.(PeerID)
+			fmt.Printf("distance: %d, %s\n", idx, id)
+		}
+
+		bucket.mutex.RUnlock()
+	}
 }
