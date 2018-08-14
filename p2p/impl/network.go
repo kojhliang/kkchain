@@ -48,7 +48,6 @@ type Network struct {
 	keys *crypto.KeyPair
 
 	dht            *dht.DHT
-	peers          map[string]*Peer
 	BootstrapNodes []*Node
 	listenAddr     string
 	running        bool
@@ -107,7 +106,6 @@ func (n *Network) Start() error {
 		return fmt.Errorf("Server.PrivateKey must be set to a non-nil key")
 	}
 
-	n.peers = make(map[string]*Peer)
 	n.quit = make(chan struct{})
 
 	// init handshake msg handler
@@ -180,7 +178,6 @@ func (n *Network) startListening() error {
 func (n *Network) run() {
 	defer n.loopWG.Done()
 
-running:
 	for {
 
 		// connect boostnode
@@ -208,14 +205,10 @@ running:
 		}
 		select {
 		case <-n.quit:
-			break running
+			break
 		}
 	}
 
-	// when server quit , close all connection
-	for _, p := range n.peers {
-		p.Disconnect(DiscQuitting)
-	}
 	n.host.RemoveAllConnection()
 }
 
@@ -281,14 +274,12 @@ func (n *Network) setupConn(fd net.Conn, flag connFlag, dialDest *Node) error {
 			return err
 		}
 		if conn == existConn {
-			peer := newPeer(conn)
-			n.peers[hex.EncodeToString(peer.ID.PublicKey)] = peer
 
 			// when success to accept conn,notify dht the remote peer ID
 			n.dht.GetRecvchan() <- conn.remotePeer
 			log.WithFields(logrus.Fields{
-				"addr": fd.RemoteAddr().String(),
-				"conn": flag,
+				"addr":      fd.RemoteAddr().String(),
+				"conn_flag": "inbound",
 			}).Info("accept connection")
 		}
 	} else {
