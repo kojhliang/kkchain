@@ -5,11 +5,7 @@ import (
 	"net"
 	"sync"
 
-	"time"
-
 	"strings"
-
-	"encoding/hex"
 
 	"github.com/gogo/protobuf/types"
 	"github.com/invin/kkchain/crypto"
@@ -26,11 +22,6 @@ import (
 var (
 	errServerStopped = errors.New("server stopped")
 	log              = logrus.New()
-)
-
-const (
-	defaultDialTimeout = 15 * time.Second
-	defaultDBPath      = "./nodedb"
 )
 
 type connFlag int
@@ -141,7 +132,6 @@ func (n *Network) Start() error {
 
 	// dail
 	go n.run()
-	n.running = true
 
 	return nil
 }
@@ -191,12 +181,10 @@ func (n *Network) run() {
 				if err != nil {
 					log.WithFields(logrus.Fields{
 						"address": node.Addr(),
-						"nodeID":  hex.EncodeToString(node.ID.PublicKey),
 					}).Error("failed to connect boost node")
 				} else {
 					log.WithFields(logrus.Fields{
 						"address": node.Addr(),
-						"nodeID":  hex.EncodeToString(node.ID.PublicKey),
 					}).Info("success to connect boost node")
 					msg := handshake.NewMessage(handshake.Message_HELLO)
 					handshake.BuildHandshake(msg)
