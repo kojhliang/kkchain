@@ -2,6 +2,7 @@ package p2p
 
 import (
 	"io"
+	"net"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/invin/kkchain/crypto"
@@ -33,6 +34,9 @@ type Network interface {
 
 	// Verify message
 	Verify(publicKey []byte, message []byte, signature []byte) bool
+
+	CreateConnection(fd net.Conn) (Conn, error)
+	CreateStream(conn Conn, protocol string) (Stream, error)
 }
 
 // Conn wraps connection related operations, such as reading and writing

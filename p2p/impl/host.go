@@ -5,9 +5,6 @@ import (
 
 	"net"
 
-	"github.com/gogo/protobuf/proto"
-	"github.com/invin/kkchain/crypto/blake2b"
-	"github.com/invin/kkchain/crypto/ed25519"
 	"github.com/invin/kkchain/p2p"
 )
 
@@ -104,32 +101,12 @@ func (h *Host) ID() p2p.ID {
 }
 
 // Connect connects to remote peer
-func (h *Host) Connect(address string) (p2p.Conn, error) {
+func (h *Host) Connect(address string) (net.Conn, error) {
 	fd, err := net.Dial("tcp", address)
 	if err != nil {
 		return nil, err
 	}
-	config := p2p.Config{
-		SignaturePolicy: ed25519.New(),
-		HashPolicy:      blake2b.New(),
-	}
-	network := NewNetwork(h.id.Address, config)
-	if network == nil {
-		return nil, failedNewNetwork
-	}
-	conn := NewConnection(fd, network, h)
-	if conn == nil {
-		return nil, failedNewConnection
-	}
-	return conn, nil
-}
-
-// SendMsg sends single msg
-func (h *Host) SendMsg(conn p2p.Conn, protocol string, msg proto.Message) {
-	stream := NewStream(conn, protocol)
-	if stream != nil {
-		stream.Write(msg)
-	}
+	return fd, nil
 }
 
 // SetStreamHandler sets handler for some a stream

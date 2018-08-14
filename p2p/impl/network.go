@@ -115,7 +115,7 @@ func (n *Network) Start() error {
 	// set host to handle dht msg,and run dht
 	config := dht.DefaultConfig()
 	//config.Listen = n.listenAddr
-	n.dht = dht.NewDHT(config, n.host)
+	n.dht = dht.NewDHT(config, n, n.host)
 
 	// do dht
 	go func() {
@@ -182,11 +182,12 @@ func (n *Network) run() {
 
 		// connect boostnode
 		for _, node := range n.BootstrapNodes {
-			if conn, _ := n.host.GetConnection(node.ID); conn != nil {
+			conn, _ := n.host.GetConnection(node.ID)
+			if conn != nil {
 				continue
 			}
 			go func() {
-				conn, err := n.host.Connect(node.Addr())
+				fd, err := n.host.Connect(node.Addr())
 				if err != nil {
 					log.WithFields(logrus.Fields{
 						"address": node.Addr(),
@@ -199,7 +200,20 @@ func (n *Network) run() {
 					}).Info("success to connect boost node")
 					msg := handshake.NewMessage(handshake.Message_HELLO)
 					handshake.BuildHandshake(msg)
-					n.host.SendMsg(conn, "/kkchain/p2p/handshake/1.0.0", msg)
+					conn, err = n.CreateConnection(fd)
+					if err != nil {
+						log.Error(err)
+					} else {
+						stream, err := n.CreateStream(conn, "/kkchain/p2p/handshake/1.0.0")
+						if err != nil {
+							log.Error(err)
+						} else {
+							err := stream.Write(msg)
+							if err != nil {
+								log.Error(err)
+							}
+						}
+					}
 				}
 			}()
 		}
@@ -347,4 +361,22 @@ func (n *Network) Sign(message []byte) ([]byte, error) {
 // TODO: move to another package??
 func (n *Network) Verify(publicKey []byte, message []byte, signature []byte) bool {
 	return crypto.Verify(n.conf.SignaturePolicy, n.conf.HashPolicy, publicKey, message, signature)
+}
+
+// create connection
+func (n *Network) CreateConnection(fd net.Conn) (p2p.Conn, error) {
+	conn := NewConnection(fd, n, n.host)
+	if conn == nil {
+		return nil, failedNewConnection
+	}
+	return conn, nil
+}
+
+// create stream
+func (n *Network) CreateStream(conn p2p.Conn, protocol string) (p2p.Stream, error) {
+	stream := NewStream(conn, protocol)
+	if stream == nil {
+		return nil, failedCreateStream
+	}
+	return stream, nil
 }

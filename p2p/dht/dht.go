@@ -33,7 +33,8 @@ type DHTConfig struct {
 // DHT implements a Distributed Hash Table for p2p
 type DHT struct {
 	// self
-	host p2p.Host
+	host    p2p.Host
+	network p2p.Network
 
 	quitCh chan bool
 	table  *RoutingTable
@@ -56,7 +57,7 @@ func (dht *DHT) GetRecvchan() chan interface{} {
 }
 
 // NewDHT creates a new DHT object with the given peer as as the 'local' host
-func NewDHT(config *DHTConfig, host p2p.Host) *DHT {
+func NewDHT(config *DHTConfig, network p2p.Network, host p2p.Host) *DHT {
 
 	// If no node database was given, use an in-memory one
 	db, err := newPeerStore(config.RoutingTableDir)
@@ -77,6 +78,7 @@ func NewDHT(config *DHTConfig, host p2p.Host) *DHT {
 	}
 
 	dht.host = host
+	dht.network = network
 
 	if err := dht.host.SetStreamHandler(protocolDHT, dht.handleNewStream); err != nil {
 		panic(err)
@@ -203,7 +205,11 @@ func (dht *DHT) FindTargetNeighbours(target []byte, peer PeerID) {
 
 	//TODO: dial remote peer???
 	if conn == nil {
-		conn, err = dht.host.Connect(peer.ID.Address)
+		fd, err := dht.host.Connect(peer.ID.Address)
+		if err != nil {
+			return
+		}
+		conn, err = dht.network.CreateConnection(fd)
 		if err != nil {
 			return
 		}
@@ -211,7 +217,11 @@ func (dht *DHT) FindTargetNeighbours(target []byte, peer PeerID) {
 
 	//send find neighbours request to peer
 	pmes := NewMessage(Message_FIND_NODE, hex.EncodeToString(target))
-	dht.host.SendMsg(conn, protocolDHT, pmes)
+	stream, err := dht.network.CreateStream(conn, protocolDHT)
+	if err != nil {
+		return
+	}
+	stream.Write(pmes)
 }
 
 // RandomTargetID generate random peer id for query target

@@ -13,6 +13,7 @@ var (
 	errStreamNotFound      = errors.New("stream not found")
 	failedNewConnection    = errors.New("failed to new connection")
 	failedNewNetwork       = errors.New("failed to new network")
+	failedCreateStream     = errors.New("failed to create stream")
 )
 
 const (

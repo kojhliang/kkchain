@@ -186,9 +186,9 @@ func (c *Connection) ReadMessage() (*protobuf.Message, error) {
 	}
 
 	// Verify signature of the message
-	//if !c.n.Verify(msg.Sender.PublicKey, SerializeMessage(msg.Sender, msg.Message.Value), msg.Signature) {
-	//	return nil, errVerifySign
-	//}
+	if !c.n.Verify(msg.Sender.PublicKey, SerializeMessage(msg.Sender, msg.Message.Value), msg.Signature) {
+		return nil, errVerifySign
+	}
 
 	// FIXME: set remote peer before handshaking
 	c.remotePeer = p2p.ID(*msg.Sender)
