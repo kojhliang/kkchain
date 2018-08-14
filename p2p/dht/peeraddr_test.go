@@ -5,15 +5,17 @@ import (
 
 	"encoding/hex"
 	"fmt"
-	"github.com/invin/kkchain/p2p"
-	crypto "github.com/libp2p/go-libp2p-crypto"
+	"github.com/invin/kkchain/crypto/ed25519"
 )
 
 func TestFormatAddr(t *testing.T) {
 	t.Parallel()
 
-	key, _ := p2p.GenerateKey(crypto.Secp256k1)
-	pbKey, _ := key.GetPublic().Bytes()
+	//key, _ := p2p.GenerateKey(crypto.Secp256k1)
+	//pbKey, _ := key.GetPublic().Bytes()
+
+	kp := ed25519.RandomKeyPair()
+	pbKey := kp.PublicKey
 
 	peerA := CreateID("/ip4/127.0.0.1/tcp/8860", pbKey)
 
@@ -29,7 +31,7 @@ func TestFormatAddr(t *testing.T) {
 func TestParsePeerAddr(t *testing.T) {
 	t.Parallel()
 
-	address := peeraddr("08021221022c8c52f66009dd50396dc49876742d37b26ddb5cb83006ee417112cf2da7edd7@/ip4/127.0.0.1/tcp/8860")
+	address := peeraddr("c0bc7c08b52dc1df44dcc450068171f7039ea89c6ce9c678908a4f76c5f8d2f4@/ip4/127.0.0.1/tcp/8860")
 
 	id, err := ParsePeerAddr(address)
 	if err != nil {
