@@ -28,7 +28,6 @@ const (
 type DHTConfig struct {
 	BucketSize      int
 	RoutingTableDir string
-	BootstrapNodes  []string
 }
 
 // DHT implements a Distributed Hash Table for p2p
@@ -37,19 +36,19 @@ type DHT struct {
 	host    p2p.Host
 	network p2p.Network
 
-	quitCh chan bool
-	table  *RoutingTable
-	store  *PeerStore
-	config *DHTConfig
-	self   PeerID
-	recvCh chan interface{}
+	quitCh         chan bool
+	table          *RoutingTable
+	store          *PeerStore
+	config         *DHTConfig
+	self           PeerID
+	BootstrapNodes []string
+	recvCh         chan interface{}
 }
 
 func DefaultConfig() *DHTConfig {
 	return &DHTConfig{
 		BucketSize:      BucketSize,
 		RoutingTableDir: "",
-		BootstrapNodes:  []string{},
 	}
 }
 
@@ -211,10 +210,6 @@ func (dht *DHT) FindTargetNeighbours(target []byte, peer PeerID) {
 	}
 
 	conn, err := dht.host.GetConnection(peer.ID)
-	if err != nil {
-		return
-	}
-
 	//TODO: dial remote peer???
 	if conn == nil {
 		fd, err := dht.host.Connect(peer.ID.Address)
@@ -255,7 +250,7 @@ func (dht *DHT) SyncRouteTable() {
 	syncedPeers := make(map[string]bool)
 
 	// sync with seed nodes.
-	for _, addr := range dht.config.BootstrapNodes {
+	for _, addr := range dht.network.Bootstraps() {
 		pid, err := ParsePeerAddr(addr)
 		if err != nil {
 			continue
@@ -298,7 +293,7 @@ func (dht *DHT) saveTableToStore() {
 }
 
 func (dht *DHT) loadBootstrapNodes() {
-	for _, addr := range dht.config.BootstrapNodes {
+	for _, addr := range dht.network.Bootstraps() {
 		peer, err := ParsePeerAddr(addr)
 		if err != nil {
 			continue

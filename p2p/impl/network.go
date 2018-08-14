@@ -7,8 +7,6 @@ import (
 
 	"time"
 
-	"strings"
-
 	"encoding/hex"
 
 	"github.com/gogo/protobuf/types"
@@ -47,8 +45,9 @@ type Network struct {
 	// Node's keypair.
 	keys *crypto.KeyPair
 
-	dht            *dht.DHT
-	BootstrapNodes []*Node
+	dht *dht.DHT
+	//BootstrapNodes []*Node
+	BootstrapNodes []string
 	listenAddr     string
 	running        bool
 	quit           chan struct{}
@@ -66,28 +65,6 @@ func NewNetwork(address string, conf p2p.Config) *Network {
 		host:       NewHost(id),
 		keys:       keys,
 		listenAddr: address,
-	}
-}
-
-func (n *Network) Self() *Node {
-	n.lock.Lock()
-	defer n.lock.Unlock()
-	if !n.running {
-		return nil
-	}
-	return n.makeSelf(n.listenAddr)
-}
-
-func (n *Network) makeSelf(listenAddr string) *Node {
-	pubkey := n.keys.PublicKey
-	if listenAddr == "" {
-		return &Node{IP: "0.0.0.0", ID: p2p.CreateID("0.0.0.0", pubkey)}
-	}
-	addr := strings.Split(listenAddr, ":")
-	return &Node{
-		ID:      p2p.CreateID(listenAddr, pubkey),
-		IP:      addr[0],
-		TCPPort: addr[1],
 	}
 }
 
@@ -151,6 +128,10 @@ func (n *Network) Conf() p2p.Config {
 	return n.conf
 }
 
+func (n *Network) Bootstraps() []string {
+	return n.BootstrapNodes
+}
+
 // Stop stops the p2p stack
 func (n *Network) Stop() {
 	n.lock.Lock()
@@ -164,7 +145,12 @@ func (n *Network) Stop() {
 }
 
 func (n *Network) startListening() error {
-	listener, err := net.Listen("tcp", n.listenAddr)
+	addr, err := dht.ToNetAddr(n.listenAddr)
+	if err != nil {
+		return err
+	}
+
+	listener, err := net.Listen(addr.Network(), addr.String())
 	if err != nil {
 		return err
 	}
@@ -182,21 +168,25 @@ func (n *Network) run() {
 
 		// connect boostnode
 		for _, node := range n.BootstrapNodes {
-			conn, _ := n.host.GetConnection(node.ID)
+			peer, err := dht.ParsePeerAddr(node)
+			if err != nil {
+				continue
+			}
+			conn, _ := n.host.GetConnection(peer.ID)
 			if conn != nil {
 				continue
 			}
 			go func() {
-				fd, err := n.host.Connect(node.Addr())
+				fd, err := n.host.Connect(peer.Address)
 				if err != nil {
 					log.WithFields(logrus.Fields{
-						"address": node.Addr(),
-						"nodeID":  hex.EncodeToString(node.ID.PublicKey),
+						"address": peer.Address,
+						"nodeID":  hex.EncodeToString(peer.ID.PublicKey),
 					}).Error("failed to connect boost node")
 				} else {
 					log.WithFields(logrus.Fields{
-						"address": node.Addr(),
-						"nodeID":  hex.EncodeToString(node.ID.PublicKey),
+						"address": peer.Address,
+						"nodeID":  hex.EncodeToString(peer.ID.PublicKey),
 					}).Info("success to connect boost node")
 					msg := handshake.NewMessage(handshake.Message_HELLO)
 					handshake.BuildHandshake(msg)
@@ -242,17 +232,14 @@ func (n *Network) listenLoop(listener net.Listener) {
 			break
 		}
 		go func() {
-			n.SetupConn(fd, inboundConn, nil)
+			n.SetupConn(fd, inboundConn, "")
 		}()
 	}
 }
 
 // create connection
-func (n *Network) SetupConn(fd net.Conn, flag connFlag, dialDest *Node) error {
-	self := n.Self()
-	if self == nil {
-		return errors.New("shutdown")
-	}
+func (n *Network) SetupConn(fd net.Conn, flag connFlag, dialDest string) error {
+
 	err := n.setupConn(fd, flag, dialDest)
 	if err != nil {
 		log.WithFields(logrus.Fields{
@@ -264,7 +251,7 @@ func (n *Network) SetupConn(fd net.Conn, flag connFlag, dialDest *Node) error {
 	return nil
 }
 
-func (n *Network) setupConn(fd net.Conn, flag connFlag, dialDest *Node) error {
+func (n *Network) setupConn(fd net.Conn, flag connFlag, dialDest string) error {
 	n.lock.Lock()
 	running := n.running
 	n.lock.Unlock()

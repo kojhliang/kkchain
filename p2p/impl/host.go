@@ -6,6 +6,7 @@ import (
 	"net"
 
 	"github.com/invin/kkchain/p2p"
+	"github.com/invin/kkchain/p2p/dht"
 )
 
 // Host defines a host for connections
@@ -102,7 +103,12 @@ func (h *Host) ID() p2p.ID {
 
 // Connect connects to remote peer
 func (h *Host) Connect(address string) (net.Conn, error) {
-	fd, err := net.Dial("tcp", address)
+	addr, err := dht.ToNetAddr(address)
+	if err != nil {
+		return nil, err
+	}
+
+	fd, err := net.Dial(addr.Network(), addr.String())
 	if err != nil {
 		return nil, err
 	}
