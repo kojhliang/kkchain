@@ -58,3 +58,15 @@ type Conn interface {
 	// Returns remote peer
 	RemotePeer() ID
 }
+
+// Notifiee is an interface for an object wishing to receive
+// notifications from network. Notifiees should take care not to register other
+// notifiees inside of a notification.  They should also take care to do as
+// little work as possible within their notification, putting any blocking work
+// out into a goroutine.
+type Notifiee interface {
+	Connected(Conn)      // called when a connection opened
+	Disconnected(Conn)   // called when a connection closed
+	OpenedStream(Stream) // called when a stream opened
+	ClosedStream(Stream) // called when a stream closed
+}

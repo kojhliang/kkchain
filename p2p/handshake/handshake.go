@@ -1,6 +1,7 @@
 package handshake
 
 import (
+	"fmt"
 	"context"
 
 	"github.com/gogo/protobuf/proto"
@@ -27,6 +28,8 @@ func NewHandshake(host p2p.Host) *Handshake {
 	if err := host.SetStreamHandler(protocolHandshake, hs.handleNewStream); err != nil {
 		panic(err)
 	}
+
+	host.Register(hs)
 
 	return hs
 }
@@ -80,4 +83,23 @@ func (hs *Handshake) handleMessage(s p2p.Stream, msg *Message) {
 		glog.Errorf("send response error: %s", err)
 		return
 	}
+}
+
+// Connected is called when new connection is established
+func (hs *Handshake) Connected(c p2p.Conn) {
+	fmt.Println("connected")
+}
+// Disconnected is called when the connection is closed
+func (hs *Handshake) Disconnected(c p2p.Conn) {		
+	fmt.Println("disconnect")
+}
+	
+// OpenedStream is called when new stream is opened
+func (hs *Handshake) OpenedStream(s p2p.Stream) {
+
+}
+	
+// ClosedStream is called when the stream is closed
+func (hs *Handshake) ClosedStream(s p2p.Stream){
+
 }
