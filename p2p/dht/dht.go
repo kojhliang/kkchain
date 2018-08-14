@@ -244,7 +244,7 @@ func RandomTargetID() []byte {
 // SyncRouteTable sync route table.
 func (dht *DHT) SyncRouteTable() {
 	fmt.Println("timer trigger")
-	fmt.Printf("table size: %d\n", len(dht.table.GetPeers()))
+	dht.table.printTable()
 
 	target := RandomTargetID()
 	syncedPeers := make(map[string]bool)
