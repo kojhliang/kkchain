@@ -37,6 +37,8 @@ type Network interface {
 
 	CreateConnection(fd net.Conn) (Conn, error)
 	CreateStream(conn Conn, protocol string) (Stream, error)
+
+	Bootstraps() []string
 }
 
 // Conn wraps connection related operations, such as reading and writing

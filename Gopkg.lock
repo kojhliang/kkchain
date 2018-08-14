@@ -87,6 +87,30 @@
   revision = "ad98a36ba0da87206e3378c556abbfeaeaa98668"
 
 [[projects]]
+  digest = "1:93e03541a8775ed6f7de497a20af8b7307833b6b112035e4e4c551fa6eeb6404"
+  name = "github.com/multiformats/go-multiaddr"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "f36800afeb9c141e1adb7da099e6f010dfd4c419"
+  version = "v1.2.7"
+
+[[projects]]
+  digest = "1:366fc9e8771a5bae7369aa1740cef4771380c01ce6444c58ce7a70bac5a45f31"
+  name = "github.com/multiformats/go-multiaddr-net"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "4d4b901d1729f55ee20cc0c8d8021aa58eb5ebe3"
+  version = "v1.6.2"
+
+[[projects]]
+  digest = "1:b8d8bedabae6d57024cfdfb026df5186c2e8556af7dd1d3c3592f815c7d2ef35"
+  name = "github.com/multiformats/go-multihash"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "bdcf2980a789f55c97d548fdfa727f8fb19684ba"
+  version = "0.1.0"
+
+[[projects]]
   digest = "1:40e195917a951a8bf867cd05de2a46aaf1806c50cf92eebf4c16f78cd196f747"
   name = "github.com/pkg/errors"
   packages = ["."]
@@ -134,6 +158,8 @@
     "github.com/golang/mock/gomock",
     "github.com/libp2p/go-libp2p-crypto",
     "github.com/minio/blake2b-simd",
+    "github.com/multiformats/go-multiaddr",
+    "github.com/multiformats/go-multiaddr-net",
     "github.com/pkg/errors",
     "github.com/sirupsen/logrus",
     "github.com/syndtr/goleveldb/leveldb",

@@ -40,3 +40,15 @@ func TestParsePeerAddr(t *testing.T) {
 
 	t.Logf("%s\n", id.String())
 }
+
+func TestToNetAddr(t *testing.T) {
+	t.Parallel()
+
+	address := "/ip4/127.0.0.1/tcp/8860"
+	addr, err := ToNetAddr(address)
+	if err != nil {
+		t.Errorf("ToNetAddr() = <nil>, expected %+v (%s)\n", err, address)
+	}
+
+	t.Logf("%s, %s", addr.Network(), addr.String())
+}

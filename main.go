@@ -20,7 +20,10 @@ func main() {
 		SignaturePolicy: ed25519.New(),
 		HashPolicy:      blake2b.New(),
 	}
-	net := impl.NewNetwork("127.0.0.1:"+*port, config)
+
+	listen := "/ip4/127.0.0.1/tcp/" + *port
+
+	net := impl.NewNetwork(listen, config)
 	seconds := time.Duration(*sec)
 
 	peerPort := "9999"
@@ -28,13 +31,9 @@ func main() {
 		peerPort = "9998"
 	}
 
-	node := &impl.Node{
-		"127.0.0.1",
-		peerPort,
-		p2p.ID{},
-	}
-
-	net.BootstrapNodes = []*impl.Node{node}
+	node := "/ip4/127.0.0.1/tcp/" + peerPort
+	node = "c0bc7c08b52dc1df44dcc450068171f7039ea89c6ce9c678908a4f76c5f8d2f4" + "@" + node
+	net.BootstrapNodes = []string{node}
 
 	err := net.Start()
 	if err != nil {
