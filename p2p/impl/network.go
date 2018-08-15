@@ -3,6 +3,9 @@ package impl
 import (
 	"encoding/hex"
 	"fmt"
+	"net"
+	"sync"
+
 	"github.com/gogo/protobuf/types"
 	"github.com/invin/kkchain/crypto"
 	"github.com/invin/kkchain/p2p"
@@ -12,8 +15,6 @@ import (
 	"github.com/invin/kkchain/p2p/protobuf"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"net"
-	"sync"
 )
 
 var (
@@ -147,7 +148,7 @@ func (n *Network) startListening() error {
 	laddr := listener.Addr().(*net.TCPAddr)
 	n.listenAddr = laddr.String()
 	n.loopWG.Add(1)
-	go n.listenLoop(listener)
+	go n.Accept(listener)
 	return nil
 }
 
@@ -206,98 +207,48 @@ func (n *Network) run() {
 	n.host.RemoveAllConnection()
 }
 
-func (n *Network) listenLoop(listener net.Listener) {
+// Accept connection
+// FIXME: reference implementation
+func (n *Network) Accept(listener net.Listener) {
 	defer n.loopWG.Done()
+	n.lock.Lock()
+	running := n.running
+	n.lock.Unlock()
+	if !running {
+		log.Error(errServerStopped)
+		return
+	}
+
 	for {
 		var (
 			fd  net.Conn
 			err error
 		)
-		for {
-			fd, err = listener.Accept()
-			if err != nil {
-				log.Error("failed to accept:", err)
-				return
-			}
+
+		fd, err = listener.Accept()
+		if err != nil {
+			log.Error("failed to listen:", err)
 			break
 		}
-		go func() {
-			n.SetupConn(fd, inboundConn, "")
-		}()
-	}
-}
 
-// create connection
-func (n *Network) SetupConn(fd net.Conn, flag connFlag, dialDest string) error {
-
-	err := n.setupConn(fd, flag, dialDest)
-	if err != nil {
-		log.WithFields(logrus.Fields{
-			"address": fd.RemoteAddr().String(),
-			"error":   err,
-		}).Error("failed to set up connection")
-		return err
-	}
-	return nil
-}
-
-func (n *Network) setupConn(fd net.Conn, flag connFlag, dialDest string) error {
-	n.lock.Lock()
-	running := n.running
-	n.lock.Unlock()
-	if !running {
-		return errServerStopped
-	}
-
-	if flag == inboundConn {
 		conn := NewConnection(fd, n, n.host)
 		if conn == nil {
-			return failedNewConnection
+			log.Error(failedNewConnection)
+			continue
 		}
 
-		err := n.Accept(conn)
+		msg, err := conn.ReadMessage()
 		if err != nil {
-			return err
+			log.Error(err)
+			continue
 		}
 
-		existConn, err := n.host.GetConnection(conn.remotePeer)
+		err = n.dispatchMessage(conn, msg)
 		if err != nil {
-			return err
+			log.Error(err)
+			continue
 		}
-		if conn == existConn {
-
-			// when success to accept conn,notify dht the remote peer ID
-			n.dht.GetRecvchan() <- conn.remotePeer
-			log.WithFields(logrus.Fields{
-				"addr":      fd.RemoteAddr().String(),
-				"conn_flag": "inbound",
-			}).Info("accept connection")
-		}
-	} else {
-
-		// outbound conn
-
 	}
-	return nil
-}
-
-// Accept connection
-// FIXME: reference implementation
-func (n *Network) Accept(conn p2p.Conn) error {
-	msg, err := conn.ReadMessage()
-	if err != nil {
-		log.Error(err)
-		return err
-	}
-
-	err = n.dispatchMessage(conn, msg)
-
-	if err != nil {
-		log.Error(err)
-		return err
-	}
-
-	return nil
 }
 
 // dispatch message according to protocol
