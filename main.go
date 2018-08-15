@@ -37,7 +37,7 @@ func main() {
 		pub, _ := ed25519.New().PrivateToPublic(pri)
 		node := "/ip4/127.0.0.1/tcp/" + peerPort
 		node = hex.EncodeToString(pub) + "@" + node
-		fmt.Println("remote peer: %s\n", node)
+		fmt.Printf("remote peer: %s\n", node)
 		net.BootstrapNodes = []string{node}
 	}
 

@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 
 	"github.com/invin/kkchain/p2p"
+	"time"
 )
 
 // dhthandler specifies the signature of functions that handle DHT messages.
@@ -78,5 +79,6 @@ func (dht *DHT) handlePing(ctx context.Context, p p2p.ID, pmes *Message) (_ *Mes
 
 func (dht *DHT) handlePong(ctx context.Context, p p2p.ID, pmes *Message) (_ *Message, err error) {
 	// TODO: update connection status
+	dht.pingpong.pingpongAt[p.PublicKeyHex()] = time.Now()
 	return nil, nil
 }
