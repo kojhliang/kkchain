@@ -284,12 +284,6 @@ func (n *Network) setupConn(fd net.Conn, flag connFlag, dialDest string) error {
 // Accept connection
 // FIXME: reference implementation
 func (n *Network) Accept(conn p2p.Conn) error {
-	defer func() {
-		if conn != nil {
-			conn.Close()
-		}
-	}()
-
 	msg, err := conn.ReadMessage()
 	if err != nil {
 		log.Error(err)

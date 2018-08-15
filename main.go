@@ -13,7 +13,7 @@ import (
 
 func main() {
 	port := flag.String("p", "9999", "")
-	sec := flag.Int("s", 60, "")
+	sec := flag.Int("s", 120, "")
 	flag.Parse()
 
 	config := p2p.Config{

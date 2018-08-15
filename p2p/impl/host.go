@@ -47,7 +47,7 @@ func (h *Host) Register(n p2p.Notifiee) error {
 	_, found := h.nMap[n]
 	if found {
 		return errDuplicateNotifiee
-	}	
+	}
 
 	h.nMap[n] = struct{}{}
 
@@ -62,7 +62,7 @@ func (h *Host) Revoke(n p2p.Notifiee) error {
 	_, found := h.nMap[n]
 	if !found {
 		return errNotifieeNotFound
-	}	
+	}
 
 	delete(h.nMap, n)
 
@@ -71,7 +71,7 @@ func (h *Host) Revoke(n p2p.Notifiee) error {
 
 // notifyAll runs the notification function on all Notifiees
 // example:
-// 
+//
 // h.notifyAll(func(n p2p.Notifiee) {
 // 	n.Connected(newConn)
 // })
@@ -135,12 +135,12 @@ func (h *Host) RemoveConnection(id p2p.ID) error {
 	defer h.mux.Unlock()
 
 	pk := string(id.PublicKey)
-	_, ok := h.cMap[pk]
+	conn, ok := h.cMap[pk]
 
 	if !ok {
 		return errConnectionNotFound
 	}
-
+	conn.Close()
 	delete(h.cMap, pk)
 
 	return nil
@@ -150,7 +150,8 @@ func (h *Host) RemoveAllConnection() {
 	h.mux.Lock()
 	defer h.mux.Unlock()
 
-	for id, _ := range h.cMap {
+	for id, conn := range h.cMap {
+		conn.Close()
 		delete(h.cMap, id)
 	}
 }
