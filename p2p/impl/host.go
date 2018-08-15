@@ -75,7 +75,7 @@ func (h *Host) Revoke(n p2p.Notifiee) error {
 // h.notifyAll(func(n p2p.Notifiee) {
 // 	n.Connected(newConn)
 // })
-func (h *Host) notifyAll(notification func(n p2p.Notifiee)) {
+func (h *Host) NotifyAll(notification func(n p2p.Notifiee)) {
 	h.notifyMux.Lock()
 	defer h.notifyMux.Unlock()
 

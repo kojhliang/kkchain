@@ -248,13 +248,6 @@ func (n *Network) Accept(listener net.Listener) {
 			log.Error(err)
 			continue
 		}
-
-		// when success to accept conn,notify dht the remote peer ID
-		n.dht.GetRecvchan() <- conn.remotePeer
-		log.WithFields(logrus.Fields{
-			"addr": conn.remotePeer.Address,
-			"id":   hex.EncodeToString(conn.remotePeer.PublicKey),
-		}).Info("accept connection")
 	}
 }
 

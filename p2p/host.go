@@ -20,7 +20,7 @@ type ConnManager interface {
 	RemoveAllConnection()
 }
 
-// Notifier defines interface for notifications 
+// Notifier defines interface for notifications
 type Notifier interface {
 	// Register notifier
 	Register(n Notifiee) error
@@ -48,4 +48,6 @@ type Host interface {
 
 	// returns the stream for protocol
 	GetStreamHandler(protocol string) (StreamHandler, error)
+
+	NotifyAll(notification func(n Notifiee))
 }
