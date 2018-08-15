@@ -212,50 +212,42 @@ func (n *Network) Accept(listener net.Listener) {
 		return
 	}
 
-listen:
 	for {
 		var (
 			fd  net.Conn
 			err error
 		)
 
-		for {
-			fd, err = listener.Accept()
-			if err != nil {
-				log.Error("failed to listen:", err)
-				break listen
-			}
+		fd, err = listener.Accept()
+		if err != nil {
+			log.Error("failed to listen:", err)
+			break
 		}
 
-		go func() {
-			conn := NewConnection(fd, n, n.host)
-			if conn == nil {
-				log.Error(failedNewConnection)
-			}
+		conn := NewConnection(fd, n, n.host)
+		if conn == nil {
+			log.Error(failedNewConnection)
+			continue
+		}
 
-			msg, err := conn.ReadMessage()
-			if err != nil {
-				log.Error(err)
-			}
+		msg, err := conn.ReadMessage()
+		if err != nil {
+			log.Error(err)
+			continue
+		}
 
-			err = n.dispatchMessage(conn, msg)
-			if err != nil {
-				log.Error(err)
-			}
+		err = n.dispatchMessage(conn, msg)
+		if err != nil {
+			log.Error(err)
+			continue
+		}
 
-			existConn, err := n.host.GetConnection(conn.remotePeer)
-			if err != nil {
-				log.Error(err)
-			}
-			if conn == existConn {
-
-				// when success to accept conn,notify dht the remote peer ID
-				n.dht.GetRecvchan() <- conn.remotePeer
-				log.WithFields(logrus.Fields{
-					"addr": fd.RemoteAddr().String(),
-				}).Info("accept connection")
-			}
-		}()
+		// when success to accept conn,notify dht the remote peer ID
+		n.dht.GetRecvchan() <- conn.remotePeer
+		log.WithFields(logrus.Fields{
+			"addr": conn.remotePeer.Address,
+			"id":   hex.EncodeToString(conn.remotePeer.PublicKey),
+		}).Info("accept connection")
 	}
 }
 
