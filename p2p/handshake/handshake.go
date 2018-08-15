@@ -1,8 +1,8 @@
 package handshake
 
 import (
-	"fmt"
 	"context"
+	"fmt"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/glog"
@@ -89,17 +89,18 @@ func (hs *Handshake) handleMessage(s p2p.Stream, msg *Message) {
 func (hs *Handshake) Connected(c p2p.Conn) {
 	fmt.Println("connected")
 }
+
 // Disconnected is called when the connection is closed
-func (hs *Handshake) Disconnected(c p2p.Conn) {		
+func (hs *Handshake) Disconnected(c p2p.Conn) {
 	fmt.Println("disconnect")
 }
-	
+
 // OpenedStream is called when new stream is opened
 func (hs *Handshake) OpenedStream(s p2p.Stream) {
 
 }
-	
+
 // ClosedStream is called when the stream is closed
-func (hs *Handshake) ClosedStream(s p2p.Stream){
+func (hs *Handshake) ClosedStream(s p2p.Stream) {
 
 }
