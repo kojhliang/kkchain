@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"encoding/hex"
+
 	"github.com/invin/kkchain/crypto/blake2b"
 	"github.com/invin/kkchain/crypto/ed25519"
 	"github.com/invin/kkchain/p2p"
