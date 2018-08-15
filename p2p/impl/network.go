@@ -22,21 +22,14 @@ var (
 	log              = logrus.New()
 )
 
-type connFlag int
-
-const (
-	outboundConn connFlag = iota
-	inboundConn
-)
-
 // Network represents the whole stack of p2p communication between peers
 type Network struct {
 	conf p2p.Config
 	host p2p.Host
 	// Node's keypair.
-	keys *crypto.KeyPair
-
-	dht *dht.DHT
+	keys     *crypto.KeyPair
+	connChan chan p2p.Conn
+	dht      *dht.DHT
 	//BootstrapNodes []*Node
 	BootstrapNodes []string
 	listenAddr     string
@@ -57,6 +50,8 @@ func NewNetwork(privateKeyPath, address string, conf p2p.Config) *Network {
 		host:       NewHost(id),
 		keys:       keys,
 		listenAddr: address,
+		connChan:   make(chan p2p.Conn),
+		quit:       make(chan struct{}),
 	}
 }
 
@@ -74,8 +69,6 @@ func (n *Network) Start() error {
 	if n.keys == nil {
 		return fmt.Errorf("Server.PrivateKey must be set to a non-nil key")
 	}
-
-	n.quit = make(chan struct{})
 
 	// init handshake msg handler
 	handshake.NewHandshake(n.host)
@@ -106,10 +99,13 @@ func (n *Network) Start() error {
 		log.Warn("P2P server will be useless, not listening")
 	}
 
-	n.loopWG.Add(1)
-
 	// dail
+	n.loopWG.Add(1)
 	go n.run()
+
+	// recv resp
+	n.loopWG.Add(1)
+	go n.RecvMessage()
 
 	return nil
 }
@@ -131,6 +127,7 @@ func (n *Network) Stop() {
 		return
 	}
 	n.running = false
+	close(n.connChan)
 	close(n.quit)
 	n.loopWG.Wait()
 }
@@ -185,6 +182,11 @@ func (n *Network) run() {
 					if err != nil {
 						log.Error(err)
 					} else {
+
+						// when success dial, add conn
+						n.host.AddConnection(peer.ID, conn)
+						n.connChan <- conn
+
 						stream, err := n.CreateStream(conn, "/kkchain/p2p/handshake/1.0.0")
 						if err != nil {
 							log.Error(err)
@@ -237,16 +239,26 @@ func (n *Network) Accept(listener net.Listener) {
 			continue
 		}
 
-		msg, err := conn.ReadMessage()
-		if err != nil {
-			log.Error(err)
-			continue
-		}
+		n.connChan <- conn
+	}
+}
 
-		err = n.dispatchMessage(conn, msg)
-		if err != nil {
-			log.Error(err)
-			continue
+func (n *Network) RecvMessage() {
+	defer n.loopWG.Done()
+	for {
+		select {
+		case conn := <-n.connChan:
+			msg, err := conn.ReadMessage()
+			if err != nil {
+				log.Error(err)
+				continue
+			}
+
+			err = n.dispatchMessage(conn, msg)
+			if err != nil {
+				log.Error(err)
+				continue
+			}
 		}
 	}
 }

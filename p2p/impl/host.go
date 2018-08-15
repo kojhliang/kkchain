@@ -104,6 +104,11 @@ func (h *Host) AddConnection(id p2p.ID, conn p2p.Conn) error {
 	}
 
 	h.cMap[pk] = conn
+
+	// notify a new conn
+	h.NotifyAll(func(n p2p.Notifiee) {
+		n.Connected(conn)
+	})
 	return nil
 }
 
