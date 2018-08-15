@@ -27,7 +27,7 @@ type Network interface {
 	Stop()
 
 	// Accept connection
-	Accept(incoming Conn) error
+	Accept(listener net.Listener)
 
 	// Sign message
 	Sign(message []byte) ([]byte, error)
