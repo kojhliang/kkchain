@@ -4,11 +4,6 @@ import (
 	"fmt"
 	"net"
 	"sync"
-
-	"time"
-
-	"encoding/hex"
-
 	"github.com/gogo/protobuf/types"
 	"github.com/invin/kkchain/crypto"
 	"github.com/invin/kkchain/crypto/ed25519"
@@ -19,16 +14,12 @@ import (
 	"github.com/invin/kkchain/p2p/protobuf"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"encoding/hex"
 )
 
 var (
 	errServerStopped = errors.New("server stopped")
 	log              = logrus.New()
-)
-
-const (
-	defaultDialTimeout = 15 * time.Second
-	defaultDBPath      = "./nodedb"
 )
 
 type connFlag int
@@ -118,7 +109,6 @@ func (n *Network) Start() error {
 
 	// dail
 	go n.run()
-	n.running = true
 
 	return nil
 }

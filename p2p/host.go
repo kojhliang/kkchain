@@ -20,9 +20,22 @@ type ConnManager interface {
 	RemoveAllConnection()
 }
 
+// Notifier defines interface for notifications 
+type Notifier interface {
+	// Register notifier
+	Register(n Notifiee) error
+
+	// Revoke notifier
+	Revoke(n Notifiee) error
+}
+
 // Host defines a host for connections
 type Host interface {
+	// Connection manager
 	ConnManager
+
+	// Notifier
+	Notifier
 
 	// Returns ID of local peer
 	ID() ID

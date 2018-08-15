@@ -14,6 +14,8 @@ var (
 	failedNewConnection    = errors.New("failed to new connection")
 	failedNewNetwork       = errors.New("failed to new network")
 	failedCreateStream     = errors.New("failed to create stream")
+	errDuplicateNotifiee   = errors.New("duplicated notifiee")
+	errNotifieeNotFound    = errors.New("notifiee not found")
 )
 
 const (

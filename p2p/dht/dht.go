@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"encoding/json"
+
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/glog"
 	"github.com/invin/kkchain/p2p"
@@ -182,7 +183,12 @@ func (dht *DHT) waitReceive() {
 	for {
 		select {
 		case msg := <-dht.recvCh:
-			fmt.Println("p2p server notify:", msg)
+			switch msg.(type) {
+			case p2p.ID:
+				id := msg.(p2p.ID)
+				peerID := CreateID(id.Address, id.PublicKey)
+				dht.AddPeer(peerID)
+			}
 		}
 	}
 }

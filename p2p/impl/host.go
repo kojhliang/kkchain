@@ -21,6 +21,12 @@ type Host struct {
 
 	// mutex to sync access
 	mux sync.Mutex
+
+	// notification listeners
+	nMap map[p2p.Notifiee]struct{}
+
+	// notifier mux
+	notifyMux sync.Mutex
 }
 
 // NewHost creates a new host object
@@ -29,7 +35,60 @@ func NewHost(id p2p.ID) *Host {
 		id:   id,
 		cMap: make(map[string]p2p.Conn),
 		sMap: make(map[string]p2p.StreamHandler),
+		nMap: make(map[p2p.Notifiee]struct{}),
 	}
+}
+
+// Register registers a notifier
+func (h *Host) Register(n p2p.Notifiee) error {
+	h.notifyMux.Lock()
+	defer h.notifyMux.Unlock()
+
+	_, found := h.nMap[n]
+	if found {
+		return errDuplicateNotifiee
+	}	
+
+	h.nMap[n] = struct{}{}
+
+	return nil
+}
+
+// Revoke revokes a notifier
+func (h *Host) Revoke(n p2p.Notifiee) error {
+	h.notifyMux.Lock()
+	defer h.notifyMux.Unlock()
+
+	_, found := h.nMap[n]
+	if !found {
+		return errNotifieeNotFound
+	}	
+
+	delete(h.nMap, n)
+
+	return nil
+}
+
+// notifyAll runs the notification function on all Notifiees
+// example:
+// 
+// h.notifyAll(func(n p2p.Notifiee) {
+// 	n.Connected(newConn)
+// })
+func (h *Host) notifyAll(notification func(n p2p.Notifiee)) {
+	h.notifyMux.Lock()
+	defer h.notifyMux.Unlock()
+
+	var wg sync.WaitGroup
+	for n := range h.nMap {
+		wg.Add(1)
+		go func(n p2p.Notifiee) {
+			defer wg.Done()
+			notification(n)
+		}(n)
+	}
+
+	wg.Wait()
 }
 
 // AddConnection a connection
