@@ -39,6 +39,8 @@ type Network interface {
 	CreateStream(conn Conn, protocol string) (Stream, error)
 
 	Bootstraps() []string
+
+	RecvMessage()
 }
 
 // Conn wraps connection related operations, such as reading and writing
