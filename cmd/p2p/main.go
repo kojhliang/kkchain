@@ -14,7 +14,6 @@ func testConfig() *dht.DHTConfig {
 	return &dht.DHTConfig{
 		BucketSize:      16,
 		RoutingTableDir: "/Users/walker/Work/dht.db",
-		BootstrapNodes:  []string{},
 	}
 }
 

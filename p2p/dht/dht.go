@@ -238,7 +238,7 @@ func RandomTargetID() []byte {
 
 	h := sha256.New()
 	h.Write(id)
-	return h.Sum(id)
+	return h.Sum(nil)
 }
 
 // SyncRouteTable sync route table.

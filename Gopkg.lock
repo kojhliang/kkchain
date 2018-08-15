@@ -19,7 +19,7 @@
   name = "github.com/btcsuite/btcd"
   packages = ["btcec"]
   pruneopts = "UT"
-  revision = "cf05f92c3f815bbd5091ed6c73eff51f7b1945e8"
+  revision = "f899737d7f2764dc13e4d01ff00108ec58f766a9"
 
 [[projects]]
   digest = "1:3f7c586d2fd571c4f2e3d313c0638b33b999055de507d5f11fafe27e5adc30db"

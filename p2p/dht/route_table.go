@@ -170,7 +170,7 @@ func (t *RoutingTable) PeerExists(target PeerID) bool {
 
 // FindClosestPeers returns a list of k(count) peers with smallest XOR distance.
 func (t *RoutingTable) FindClosestPeers(target PeerID, count int) (peers []PeerID) {
-	if len(t.self.PublicKey) != len(target.PublicKey) {
+	if len(t.self.Hash) != len(target.Hash) {
 		return []PeerID{}
 	}
 
@@ -185,7 +185,7 @@ func (t *RoutingTable) FindClosestPeers(target PeerID, count int) (peers []PeerI
 
 	bucket.mutex.RUnlock()
 
-	for i := 1; len(peers) < count && (bucketID-i >= 0 || bucketID+i < len(t.self.PublicKey)*8); i++ {
+	for i := 1; len(peers) < count && (bucketID-i >= 0 || bucketID+i < len(t.self.Hash)*8); i++ {
 		if bucketID-i >= 0 {
 			other := t.Bucket(bucketID - i)
 			other.mutex.RLock()
@@ -195,7 +195,7 @@ func (t *RoutingTable) FindClosestPeers(target PeerID, count int) (peers []PeerI
 			other.mutex.RUnlock()
 		}
 
-		if bucketID+i < len(t.self.PublicKey)*8 {
+		if bucketID+i < len(t.self.Hash)*8 {
 			other := t.Bucket(bucketID + i)
 			other.mutex.RLock()
 			for e := other.Front(); e != nil; e = e.Next() {

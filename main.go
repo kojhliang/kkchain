@@ -29,11 +29,10 @@ func main() {
 	peerPort := "9999"
 	if *port == "9999" {
 		peerPort = "9998"
+		node := "/ip4/127.0.0.1/tcp/" + peerPort
+		node = "c0bc7c08b52dc1df44dcc450068171f7039ea89c6ce9c678908a4f76c5f8d2f4" + "@" + node
+		net.BootstrapNodes = []string{node}
 	}
-
-	node := "/ip4/127.0.0.1/tcp/" + peerPort
-	node = "c0bc7c08b52dc1df44dcc450068171f7039ea89c6ce9c678908a4f76c5f8d2f4" + "@" + node
-	net.BootstrapNodes = []string{node}
 
 	err := net.Start()
 	if err != nil {
