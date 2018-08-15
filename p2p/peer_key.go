@@ -1,57 +1,65 @@
 package p2p
 
 import (
-	"crypto/rand"
 	"encoding/base64"
 	"io/ioutil"
+	"os"
 
-	crypto "github.com/libp2p/go-libp2p-crypto"
+	"github.com/invin/kkchain/crypto"
+	"github.com/invin/kkchain/crypto/ed25519"
 )
 
-// LoadNetworkKeyFromFile load network priv key from file.
-func LoadNetworkKeyFromFile(path string) (crypto.PrivKey, error) {
+// LoadNodeKeyFromFile load node priv key from file.
+func LoadNodeKeyFromFile(path string) ([]byte, error) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
-	return UnmarshalNetworkKey(string(data))
+	return UnmarshalNodeKey(string(data))
 }
 
-// LoadNetworkKeyFromFileOrCreateNew load network priv key from file or create new one.
-func LoadNetworkKeyFromFileOrCreateNew(path string) (crypto.PrivKey, error) {
+// LoadNodeKeyFromFileOrCreateNew load node priv key from file or create new one.
+func LoadNodeKeyFromFileOrCreateNew(path string) (*crypto.KeyPair, error) {
+	create := false
 	if path == "" {
-		return GenerateEd25519Key()
+		path = "node.key"
 	}
-	return LoadNetworkKeyFromFile(path)
+
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		create = true
+	}
+
+	if create {
+		keys := ed25519.RandomKeyPair()
+		privkey := MarshalNodeKey(keys.PrivateKey)
+		ioutil.WriteFile(path, []byte(privkey), os.ModePerm)
+		return keys, nil
+	} else {
+		privateKey, err := LoadNodeKeyFromFile(path)
+		if err != nil {
+			return nil, err
+		}
+		publicKey, _ := ed25519.New().PrivateToPublic(privateKey)
+
+		return &crypto.KeyPair{
+			PublicKey:  publicKey,
+			PrivateKey: privateKey,
+		}, nil
+	}
+
 }
 
-// UnmarshalNetworkKey unmarshal network key.
-func UnmarshalNetworkKey(data string) (crypto.PrivKey, error) {
+// UnmarshalNodeKey unmarshal node key.
+func UnmarshalNodeKey(data string) ([]byte, error) {
 	binaryData, err := base64.StdEncoding.DecodeString(data)
 	if err != nil {
 		return nil, err
 	}
 
-	return crypto.UnmarshalPrivateKey(binaryData)
+	return binaryData, nil
 }
 
-// MarshalNetworkKey marshal network key.
-func MarshalNetworkKey(key crypto.PrivKey) (string, error) {
-	binaryData, err := crypto.MarshalPrivateKey(key)
-	if err != nil {
-		return "", err
-	}
-
-	return base64.StdEncoding.EncodeToString(binaryData), nil
-}
-
-// GenerateEd25519Key return a new generated Ed22519 Private key.
-func GenerateEd25519Key() (crypto.PrivKey, error) {
-	key, _, err := crypto.GenerateEd25519Key(rand.Reader)
-	return key, err
-}
-
-func GenerateKey(typ int) (crypto.PrivKey, error) {
-	key, _, err := crypto.GenerateKeyPair(typ, 256)
-	return key, err
+// MarshalNodeKey marshal node key.
+func MarshalNodeKey(key []byte) string {
+	return base64.StdEncoding.EncodeToString(key)
 }

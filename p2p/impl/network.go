@@ -1,12 +1,10 @@
 package impl
 
 import (
+	"encoding/hex"
 	"fmt"
-	"net"
-	"sync"
 	"github.com/gogo/protobuf/types"
 	"github.com/invin/kkchain/crypto"
-	"github.com/invin/kkchain/crypto/ed25519"
 	"github.com/invin/kkchain/p2p"
 	"github.com/invin/kkchain/p2p/chain"
 	"github.com/invin/kkchain/p2p/dht"
@@ -14,7 +12,8 @@ import (
 	"github.com/invin/kkchain/p2p/protobuf"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"encoding/hex"
+	"net"
+	"sync"
 )
 
 var (
@@ -47,8 +46,9 @@ type Network struct {
 }
 
 // NewNetwork creates a new Network instance with the specified configuration
-func NewNetwork(address string, conf p2p.Config) *Network {
-	keys := ed25519.RandomKeyPair()
+func NewNetwork(privateKeyPath, address string, conf p2p.Config) *Network {
+	//keys := ed25519.RandomKeyPair()
+	keys, _ := p2p.LoadNodeKeyFromFileOrCreateNew(privateKeyPath)
 	id := p2p.CreateID(address, keys.PublicKey)
 
 	return &Network{
