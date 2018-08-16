@@ -239,7 +239,7 @@ func (n *Network) RecvMessage() {
 				if err != nil {
 					continue
 				}
-				fmt.Println("\n接受的消息：", msg.Sender, msg.Message.TypeUrl)
+				fmt.Println("\n接受的消息：", msg.Sender, msg.Message.TypeUrl, "\n")
 				err = n.dispatchMessage(conn, msg)
 				if err != nil {
 					continue

@@ -60,7 +60,6 @@ type DHT struct {
 	config         *DHTConfig
 	self           PeerID
 	BootstrapNodes []string
-	recvCh         chan interface{}
 	pingpong       *PingPongService
 }
 
@@ -69,10 +68,6 @@ func DefaultConfig() *DHTConfig {
 		BucketSize:      BucketSize,
 		RoutingTableDir: "",
 	}
-}
-
-func (dht *DHT) GetRecvchan() chan interface{} {
-	return dht.recvCh
 }
 
 // NewDHT creates a new DHT object with the given peer as as the 'local' host
@@ -92,7 +87,6 @@ func NewDHT(config *DHTConfig, network p2p.Network, host p2p.Host) *DHT {
 		self:     self,
 		table:    CreateRoutingTable(self),
 		store:    db,
-		recvCh:   make(chan interface{}),
 		pingpong: newPingPongService(),
 	}
 
@@ -165,8 +159,6 @@ func (dht *DHT) Start() {
 
 	fmt.Println("start sync loop.....")
 	go dht.syncLoop()
-	go dht.waitReceive()
-
 	go dht.checkPingPong()
 }
 
@@ -200,20 +192,6 @@ func (dht *DHT) syncLoop() {
 			dht.SyncRouteTable()
 		case <-saveTableToStore.C:
 			dht.saveTableToStore()
-		}
-	}
-}
-
-func (dht *DHT) waitReceive() {
-	for {
-		select {
-		case msg := <-dht.recvCh:
-			switch msg.(type) {
-			case p2p.ID:
-				id := msg.(p2p.ID)
-				peerID := CreateID(id.Address, id.PublicKey)
-				dht.AddPeer(peerID)
-			}
 		}
 	}
 }
@@ -349,7 +327,10 @@ func (dht *DHT) loadTableFromDB() {
 
 // Connected is called when new connection is established
 func (dht *DHT) Connected(c p2p.Conn) {
-	fmt.Println("connected")
+	fmt.Println("在dht中获取通知：connected")
+	id := c.RemotePeer()
+	peerID := CreateID(id.Address, id.PublicKey)
+	dht.AddPeer(peerID)
 	go dht.ping(c)
 }
 
