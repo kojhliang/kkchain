@@ -167,7 +167,7 @@ func (dht *DHT) Start() {
 	go dht.syncLoop()
 	go dht.waitReceive()
 
-	//go dht.checkPingPong()
+	go dht.checkPingPong()
 }
 
 func (dht *DHT) Stop() {
@@ -352,7 +352,7 @@ func (dht *DHT) Connected(c p2p.Conn) {
 	fmt.Println("connected")
 	peerID := CreateID(c.RemotePeer().Address, c.RemotePeer().PublicKey)
 	dht.AddPeer(peerID)
-	//go dht.ping(c)
+	go dht.ping(c)
 }
 
 // Disconnected is called when the connection is closed
