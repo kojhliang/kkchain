@@ -34,16 +34,16 @@ type DHTConfig struct {
 
 type PingPongService struct {
 	mutex      *sync.RWMutex
-	stopCh     map[PeerID]chan interface{}
-	pingpongAt map[PeerID]time.Time
+	stopCh     map[string]chan interface{}
+	pingpongAt map[string]time.Time
 }
 
 func newPingPongService() *PingPongService {
 	time.Now()
 	return &PingPongService{
 		mutex:      &sync.RWMutex{},
-		stopCh:     make(map[PeerID]chan interface{}),
-		pingpongAt: make(map[PeerID]time.Time),
+		stopCh:     make(map[string]chan interface{}),
+		pingpongAt: make(map[string]time.Time),
 	}
 }
 
@@ -166,7 +166,7 @@ func (dht *DHT) Start() {
 	go dht.syncLoop()
 	go dht.waitReceive()
 
-	go dht.checkPingPong()
+	//go dht.checkPingPong()
 }
 
 func (dht *DHT) Stop() {
@@ -351,7 +351,7 @@ func (dht *DHT) Connected(c p2p.Conn) {
 	fmt.Println("connected")
 	peerID := CreateID(c.RemotePeer().Address, c.RemotePeer().PublicKey)
 	dht.AddPeer(peerID)
-	go dht.ping(c)
+	//go dht.ping(c)
 }
 
 // Disconnected is called when the connection is closed
@@ -376,7 +376,7 @@ func (dht *DHT) ping(c p2p.Conn) {
 
 	stop := make(chan interface{})
 	dht.pingpong.mutex.Lock()
-	peer := CreateID(c.RemotePeer().Address, c.RemotePeer().PublicKey)
+	peer := CreateID(c.RemotePeer().Address, c.RemotePeer().PublicKey).HashHex()
 	if dht.pingpong.stopCh[peer] == nil {
 		dht.pingpong.stopCh[peer] = stop
 	} else {
@@ -390,7 +390,7 @@ func (dht *DHT) ping(c p2p.Conn) {
 			delete(dht.pingpong.stopCh, peer)
 			return
 		case <-pingTicker.C:
-			fmt.Printf("sending ping to %s\n", peer.ID)
+			fmt.Printf("sending ping to %s\n", c.RemotePeer().Address)
 			pmes := NewMessage(Message_PING, "")
 			stream, err := dht.network.CreateStream(c, protocolDHT)
 			if err != nil {
@@ -418,7 +418,9 @@ func (dht *DHT) checkPingPong() {
 			for p, t := range dht.pingpong.pingpongAt {
 				if time.Now().Sub(t) > 60*time.Second {
 					dht.pingpong.stopCh[p] <- new(interface{})
-					dht.RemovePeer(p)
+					hash, _ := hex.DecodeString(p)
+					peer := PeerID{Hash: hash}
+					dht.RemovePeer(peer)
 				}
 			}
 

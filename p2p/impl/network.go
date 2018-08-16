@@ -253,7 +253,7 @@ func (n *Network) RecvMessage() {
 				log.Error(err)
 				continue
 			}
-
+			fmt.Printf("RecvMessage: %s, %s\n", msg.Protocol, string(msg.Message.Value))
 			err = n.dispatchMessage(conn, msg)
 			if err != nil {
 				log.Error(err)

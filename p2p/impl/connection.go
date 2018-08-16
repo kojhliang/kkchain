@@ -7,6 +7,7 @@ import (
 	"net"
 	"sync"
 
+	"fmt"
 	"github.com/gogo/protobuf/proto"
 	"github.com/gogo/protobuf/types"
 	"github.com/golang/glog"
@@ -100,6 +101,9 @@ func (c *Connection) WriteMessage(msg *protobuf.Message) error {
 
 // sendMessage marshals, signs and sends a message over a stream.
 func (c *Connection) sendMessage(w io.Writer, message *protobuf.Message, writerMutex *sync.Mutex) error {
+
+	fmt.Printf("sendMessage conn: %s, %s, %s, %s\n", c.LocalAddr(), c.RemoteAddr(), c.RemotePeer(), message.Protocol)
+
 	bytes, err := proto.Marshal(message)
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal message")

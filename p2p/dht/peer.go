@@ -73,3 +73,7 @@ func GetIDFromPublicKey(publicKey []byte) []byte {
 	h.Write(publicKey)
 	return h.Sum(nil)
 }
+
+func (p PeerID) HashHex() string {
+	return hex.EncodeToString(p.Hash)
+}
