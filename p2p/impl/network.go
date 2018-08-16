@@ -55,6 +55,10 @@ func NewNetwork(privateKeyPath, address string, conf p2p.Config) *Network {
 	}
 }
 
+func (n *Network) GetConnChan() *chan p2p.Conn {
+	return &n.connChan
+}
+
 // Start kicks off the p2p stack
 func (n *Network) Start() error {
 	n.lock.Lock()
