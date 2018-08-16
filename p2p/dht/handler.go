@@ -80,6 +80,6 @@ func (dht *DHT) handlePing(ctx context.Context, p p2p.ID, pmes *Message) (_ *Mes
 
 func (dht *DHT) handlePong(ctx context.Context, p p2p.ID, pmes *Message) (_ *Message, err error) {
 	// TODO: update connection status
-	dht.pingpong.pingpongAt[p.PublicKeyHex()] = time.Now()
+	dht.pingpong.pingpongAt[CreateID(p.Address, p.PublicKey).HashHex()] = time.Now()
 	return nil, nil
 }
