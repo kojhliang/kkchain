@@ -162,7 +162,7 @@ func (n *Network) run() {
 			continue
 		}
 		go func() {
-			fd, err := n.host.Connect(peer.Address)
+			conn, err := n.host.Connect(peer.Address, n)
 			if err != nil {
 				log.WithFields(logrus.Fields{
 					"address": peer.Address,
@@ -175,19 +175,13 @@ func (n *Network) run() {
 				}).Info("success to connect boost node")
 				msg := handshake.NewMessage(handshake.Message_HELLO)
 				handshake.BuildHandshake(msg)
-				conn, err = n.CreateConnection(fd)
+				stream, err := n.CreateStream(conn, "/kkchain/p2p/handshake/1.0.0")
 				if err != nil {
 					log.Error(err)
 				} else {
-					stream, err := n.CreateStream(conn, "/kkchain/p2p/handshake/1.0.0")
+					err := stream.Write(msg)
 					if err != nil {
 						log.Error(err)
-					} else {
-						err := stream.Write(msg)
-						if err != nil {
-							log.Error(err)
-						}
-						n.connChan <- conn
 					}
 				}
 			}
@@ -239,7 +233,7 @@ func (n *Network) RecvMessage() {
 				if err != nil {
 					continue
 				}
-				fmt.Println("\n接受的消息：", msg.Sender, msg.Message.TypeUrl)
+				fmt.Println("\n接受的消息：", msg.Sender, msg.Message.TypeUrl, "\n")
 				err = n.dispatchMessage(conn, msg)
 				if err != nil {
 					continue

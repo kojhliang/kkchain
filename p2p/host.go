@@ -1,7 +1,5 @@
 package p2p
 
-import "net"
-
 // ConnManager defines interface to manage connections
 type ConnManager interface {
 	// Add a connection
@@ -41,7 +39,7 @@ type Host interface {
 	ID() ID
 
 	// Connect to remote peer
-	Connect(address string) (net.Conn, error)
+	Connect(address string, net Network) (Conn, error)
 
 	// Set stream handler
 	SetStreamHandler(protocol string, handler StreamHandler) error
