@@ -173,7 +173,7 @@ func (dht *DHT) syncLoop() {
 	dht.table.printTable()
 
 	//first sync
-	dht.SyncRouteTable()
+	//dht.SyncRouteTable()
 
 	//TODO: config timer
 	syncLoopTicker := time.NewTicker(DefaultSyncTableInterval)
@@ -213,7 +213,7 @@ func (dht *DHT) RemovePeer(peer PeerID) {
 
 //FindTargetNeighbours searches target's neighbours from given PeerID
 func (dht *DHT) FindTargetNeighbours(target []byte, peer PeerID) {
-
+	fmt.Printf("FindTargetNeighbours from %s, target: %s\n", peer, hex.EncodeToString(target))
 	if peer.Equals(dht.self) {
 		return
 	}
@@ -221,10 +221,15 @@ func (dht *DHT) FindTargetNeighbours(target []byte, peer PeerID) {
 	conn, err := dht.host.GetConnection(peer.ID)
 	//TODO: dial remote peer???
 	if conn == nil {
+		fmt.Println("FindTargetNeighbours dail remote peer")
 		conn, err = dht.host.Connect(peer.ID.Address, dht.network)
 		if err != nil {
 			return
 		}
+
+		dht.host.AddConnection(peer.ID, conn)
+
+		*dht.network.GetConnChan() <- conn
 	}
 
 	//send find neighbours request to peer
@@ -268,6 +273,7 @@ func (dht *DHT) SyncRouteTable() {
 	// random peer selection.
 	peers := dht.table.GetPeers()
 	peersCount := len(peers)
+	fmt.Printf("peersCount=%d\n", peersCount)
 	if peersCount <= 1 {
 		return
 	}

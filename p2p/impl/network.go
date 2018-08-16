@@ -187,6 +187,8 @@ func (n *Network) run() {
 					if err != nil {
 						log.Error(err)
 					}
+					n.host.AddConnection(peer.ID, conn)
+					n.connChan <- conn
 				}
 			}
 		}()
@@ -216,7 +218,7 @@ func (n *Network) Accept(listener net.Listener) {
 			log.Error("failed to listen:", err)
 			break
 		}
-
+		fmt.Println("listener accepted...")
 		conn := NewConnection(fd, n, n.host)
 		if conn == nil {
 			log.Error(failedNewConnection)

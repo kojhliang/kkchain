@@ -180,9 +180,10 @@ func (h *Host) Connect(address string, network p2p.Network) (p2p.Conn, error) {
 
 	conn := NewConnection(fd, network, h)
 	if conn != nil {
-		*network.GetConnChan() <- conn
+		//*network.GetConnChan() <- conn
 		return conn, nil
 	}
+
 	return nil, failedNewConnection
 }
 
