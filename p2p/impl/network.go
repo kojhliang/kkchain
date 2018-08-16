@@ -50,6 +50,7 @@ func NewNetwork(privateKeyPath, address string, conf p2p.Config) *Network {
 		host:       NewHost(id),
 		keys:       keys,
 		listenAddr: address,
+		connChan:   make(chan p2p.Conn),
 		quit:       make(chan struct{}),
 	}
 }
@@ -159,10 +160,6 @@ func (n *Network) run() {
 			}
 			conn, _ := n.host.GetConnection(peer.ID)
 			if conn != nil {
-				err = n.RecvMessage(conn)
-				if err != nil {
-					log.Error(err)
-				}
 				continue
 			}
 			go func() {
@@ -260,8 +257,8 @@ func (n *Network) RecvMessage() {
 					continue
 				}
 			}
+		}()
 	}
-	return nil
 }
 
 // dispatch message according to protocol
