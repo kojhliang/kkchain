@@ -85,6 +85,7 @@ func (n *Network) Start() error {
 		select {
 		case <-n.quit:
 			n.dht.Stop()
+			n.host.RemoveAllConnection()
 		}
 	}()
 
@@ -150,61 +151,48 @@ func (n *Network) startListening() error {
 func (n *Network) run() {
 	defer n.loopWG.Done()
 
-	for {
-
-		// connect boostnode
-		for _, node := range n.BootstrapNodes {
-			peer, err := dht.ParsePeerAddr(node)
+	// connect boostnode
+	for _, node := range n.BootstrapNodes {
+		peer, err := dht.ParsePeerAddr(node)
+		if err != nil {
+			continue
+		}
+		conn, _ := n.host.GetConnection(peer.ID)
+		if conn != nil {
+			continue
+		}
+		go func() {
+			fd, err := n.host.Connect(peer.Address)
 			if err != nil {
-				continue
-			}
-			conn, _ := n.host.GetConnection(peer.ID)
-			if conn != nil {
-				continue
-			}
-			go func() {
-				fd, err := n.host.Connect(peer.Address)
+				log.WithFields(logrus.Fields{
+					"address": peer.Address,
+					"nodeID":  hex.EncodeToString(peer.ID.PublicKey),
+				}).Error("failed to connect boost node")
+			} else {
+				log.WithFields(logrus.Fields{
+					"address": peer.Address,
+					"nodeID":  hex.EncodeToString(peer.ID.PublicKey),
+				}).Info("success to connect boost node")
+				msg := handshake.NewMessage(handshake.Message_HELLO)
+				handshake.BuildHandshake(msg)
+				conn, err = n.CreateConnection(fd)
 				if err != nil {
-					log.WithFields(logrus.Fields{
-						"address": peer.Address,
-						"nodeID":  hex.EncodeToString(peer.ID.PublicKey),
-					}).Error("failed to connect boost node")
+					log.Error(err)
 				} else {
-					log.WithFields(logrus.Fields{
-						"address": peer.Address,
-						"nodeID":  hex.EncodeToString(peer.ID.PublicKey),
-					}).Info("success to connect boost node")
-					msg := handshake.NewMessage(handshake.Message_HELLO)
-					handshake.BuildHandshake(msg)
-					conn, err = n.CreateConnection(fd)
+					stream, err := n.CreateStream(conn, "/kkchain/p2p/handshake/1.0.0")
 					if err != nil {
 						log.Error(err)
 					} else {
-
-						// when success dial, add conn
-						//n.host.AddConnection(peer.ID, conn)
-
-						stream, err := n.CreateStream(conn, "/kkchain/p2p/handshake/1.0.0")
+						err := stream.Write(msg)
 						if err != nil {
 							log.Error(err)
-						} else {
-							err := stream.Write(msg)
-							if err != nil {
-								log.Error(err)
-							}
-							n.connChan <- conn
 						}
+						n.connChan <- conn
 					}
 				}
-			}()
-		}
-		select {
-		case <-n.quit:
-			break
-		}
+			}
+		}()
 	}
-
-	n.host.RemoveAllConnection()
 }
 
 // Accept connection
