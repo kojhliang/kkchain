@@ -34,14 +34,16 @@ type DHTConfig struct {
 
 type PingPongService struct {
 	mutex      *sync.RWMutex
-	stopCh     map[string]chan interface{}
-	pingpongAt map[string]time.Time
+	stopCh     map[PeerID]chan interface{}
+	pingpongAt map[PeerID]time.Time
 }
 
 func newPingPongService() *PingPongService {
 	time.Now()
 	return &PingPongService{
-		mutex: &sync.RWMutex{},
+		mutex:      &sync.RWMutex{},
+		stopCh:     make(map[PeerID]chan interface{}),
+		pingpongAt: make(map[PeerID]time.Time),
 	}
 }
 
@@ -347,6 +349,8 @@ func (dht *DHT) loadTableFromDB() {
 // Connected is called when new connection is established
 func (dht *DHT) Connected(c p2p.Conn) {
 	fmt.Println("connected")
+	peerID := CreateID(c.RemotePeer().Address, c.RemotePeer().PublicKey)
+	dht.AddPeer(peerID)
 	go dht.ping(c)
 }
 
@@ -372,47 +376,49 @@ func (dht *DHT) ping(c p2p.Conn) {
 
 	stop := make(chan interface{})
 	dht.pingpong.mutex.Lock()
-	if dht.pingpong.stopCh[c.RemotePeer().PublicKeyHex()] != nil {
-		dht.pingpong.stopCh[c.RemotePeer().PublicKeyHex()] = stop
+	peer := CreateID(c.RemotePeer().Address, c.RemotePeer().PublicKey)
+	if dht.pingpong.stopCh[peer] == nil {
+		dht.pingpong.stopCh[peer] = stop
+	} else {
+		dht.pingpong.mutex.Unlock()
+		return
 	}
 	dht.pingpong.mutex.Unlock()
-
 	for {
 		select {
 		case <-stop:
-			delete(dht.pingpong.stopCh, c.RemotePeer().PublicKeyHex())
+			delete(dht.pingpong.stopCh, peer)
 			return
 		case <-pingTicker.C:
-			fmt.Println("sending ping")
+			fmt.Printf("sending ping to %s\n", peer.ID)
 			pmes := NewMessage(Message_PING, "")
 			stream, err := dht.network.CreateStream(c, protocolDHT)
 			if err != nil {
-				delete(dht.pingpong.stopCh, c.RemotePeer().PublicKeyHex())
+				delete(dht.pingpong.stopCh, peer)
 				return
 			}
 			err = stream.Write(pmes)
 			if err != nil {
-				dht.pingpong.stopCh[c.RemotePeer().PublicKeyHex()] = nil
-				delete(dht.pingpong.stopCh, c.RemotePeer().PublicKeyHex())
+				dht.pingpong.stopCh[peer] = nil
+				delete(dht.pingpong.stopCh, peer)
 				return
 			}
-			dht.pingpong.pingpongAt[c.RemotePeer().PublicKeyHex()] = time.Now()
+			dht.pingpong.pingpongAt[peer] = time.Now()
 		}
 	}
-
 }
 
 func (dht *DHT) checkPingPong() {
-	pingTicker := time.NewTicker(30 * time.Second)
-	defer pingTicker.Stop()
+	checkTicker := time.NewTicker(30 * time.Second)
+	defer checkTicker.Stop()
 
 	for {
 		select {
-		case <-pingTicker.C:
+		case <-checkTicker.C:
 			for p, t := range dht.pingpong.pingpongAt {
-
 				if time.Now().Sub(t) > 60*time.Second {
 					dht.pingpong.stopCh[p] <- new(interface{})
+					dht.RemovePeer(p)
 				}
 			}
 
