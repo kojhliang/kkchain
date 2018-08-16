@@ -27,13 +27,13 @@ type Network struct {
 	conf p2p.Config
 	host p2p.Host
 	// Node's keypair.
-	keys     *crypto.KeyPair
-	connChan chan p2p.Conn
-	dht      *dht.DHT
+	keys *crypto.KeyPair
+	dht  *dht.DHT
 	//BootstrapNodes []*Node
 	BootstrapNodes []string
 	listenAddr     string
 	running        bool
+	connChan       chan p2p.Conn
 	quit           chan struct{}
 	lock           sync.Mutex
 	loopWG         sync.WaitGroup
@@ -103,7 +103,6 @@ func (n *Network) Start() error {
 	n.loopWG.Add(1)
 	go n.run()
 
-	// recv resp
 	n.loopWG.Add(1)
 	go n.RecvMessage()
 
@@ -127,7 +126,6 @@ func (n *Network) Stop() {
 		return
 	}
 	n.running = false
-	close(n.connChan)
 	close(n.quit)
 	n.loopWG.Wait()
 }
@@ -184,8 +182,7 @@ func (n *Network) run() {
 					} else {
 
 						// when success dial, add conn
-						n.host.AddConnection(peer.ID, conn)
-						n.connChan <- conn
+						//n.host.AddConnection(peer.ID, conn)
 
 						stream, err := n.CreateStream(conn, "/kkchain/p2p/handshake/1.0.0")
 						if err != nil {
@@ -195,6 +192,7 @@ func (n *Network) run() {
 							if err != nil {
 								log.Error(err)
 							}
+							n.connChan <- conn
 						}
 					}
 				}
@@ -245,21 +243,21 @@ func (n *Network) Accept(listener net.Listener) {
 
 func (n *Network) RecvMessage() {
 	defer n.loopWG.Done()
-	for {
-		select {
-		case conn := <-n.connChan:
-			msg, err := conn.ReadMessage()
-			if err != nil {
-				log.Error(err)
-				continue
+	select {
+	case conn := <-n.connChan:
+		go func() {
+			for {
+				msg, err := conn.ReadMessage()
+				if err != nil {
+					continue
+				}
+				fmt.Println("\n接受的消息：", msg.Sender, msg.Message.TypeUrl)
+				err = n.dispatchMessage(conn, msg)
+				if err != nil {
+					continue
+				}
 			}
-
-			err = n.dispatchMessage(conn, msg)
-			if err != nil {
-				log.Error(err)
-				continue
-			}
-		}
+		}()
 	}
 }
 
