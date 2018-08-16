@@ -41,6 +41,7 @@ type Network interface {
 	Bootstraps() []string
 
 	RecvMessage()
+	GetConnChan() *chan Conn
 }
 
 // Conn wraps connection related operations, such as reading and writing

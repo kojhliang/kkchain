@@ -167,7 +167,7 @@ func (h *Host) ID() p2p.ID {
 }
 
 // Connect connects to remote peer
-func (h *Host) Connect(address string) (net.Conn, error) {
+func (h *Host) Connect(address string, network p2p.Network) (p2p.Conn, error) {
 	addr, err := dht.ToNetAddr(address)
 	if err != nil {
 		return nil, err
@@ -177,7 +177,13 @@ func (h *Host) Connect(address string) (net.Conn, error) {
 	if err != nil {
 		return nil, err
 	}
-	return fd, nil
+
+	conn := NewConnection(fd, network, h)
+	if conn != nil {
+		*network.GetConnChan() <- conn
+		return conn, nil
+	}
+	return nil, failedNewConnection
 }
 
 // SetStreamHandler sets handler for some a stream
