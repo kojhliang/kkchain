@@ -10,10 +10,11 @@ import (
 
 	"encoding/json"
 
+	"sync"
+
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/glog"
 	"github.com/invin/kkchain/p2p"
-	"sync"
 )
 
 const (
@@ -41,7 +42,9 @@ type PingPongService struct {
 func newPingPongService() *PingPongService {
 	time.Now()
 	return &PingPongService{
-		mutex: &sync.RWMutex{},
+		mutex:      &sync.RWMutex{},
+		stopCh:     make(map[string]chan interface{}),
+		pingpongAt: make(map[string]time.Time),
 	}
 }
 
