@@ -27,9 +27,8 @@ type Network struct {
 	conf p2p.Config
 	host p2p.Host
 	// Node's keypair.
-	keys     *crypto.KeyPair
-	connChan chan p2p.Conn
-	dht      *dht.DHT
+	keys *crypto.KeyPair
+	dht  *dht.DHT
 	//BootstrapNodes []*Node
 	BootstrapNodes []string
 	listenAddr     string
@@ -50,7 +49,6 @@ func NewNetwork(privateKeyPath, address string, conf p2p.Config) *Network {
 		host:       NewHost(id),
 		keys:       keys,
 		listenAddr: address,
-		connChan:   make(chan p2p.Conn),
 		quit:       make(chan struct{}),
 	}
 }
@@ -103,10 +101,6 @@ func (n *Network) Start() error {
 	n.loopWG.Add(1)
 	go n.run()
 
-	// recv resp
-	n.loopWG.Add(1)
-	go n.RecvMessage()
-
 	return nil
 }
 
@@ -127,7 +121,6 @@ func (n *Network) Stop() {
 		return
 	}
 	n.running = false
-	close(n.connChan)
 	close(n.quit)
 	n.loopWG.Wait()
 }
@@ -162,6 +155,10 @@ func (n *Network) run() {
 			}
 			conn, _ := n.host.GetConnection(peer.ID)
 			if conn != nil {
+				err = n.RecvMessage(conn)
+				if err != nil {
+					log.Error(err)
+				}
 				continue
 			}
 			go func() {
@@ -184,14 +181,17 @@ func (n *Network) run() {
 					} else {
 
 						// when success dial, add conn
-						n.host.AddConnection(peer.ID, conn)
-						n.connChan <- conn
+						//n.host.AddConnection(peer.ID, conn)
 
 						stream, err := n.CreateStream(conn, "/kkchain/p2p/handshake/1.0.0")
 						if err != nil {
 							log.Error(err)
 						} else {
 							err := stream.Write(msg)
+							if err != nil {
+								log.Error(err)
+							}
+							err = n.RecvMessage(conn)
 							if err != nil {
 								log.Error(err)
 							}
@@ -239,28 +239,25 @@ func (n *Network) Accept(listener net.Listener) {
 			continue
 		}
 
-		n.connChan <- conn
+		err = n.RecvMessage(conn)
+		if err != nil {
+			log.Error(err)
+			continue
+		}
 	}
 }
 
-func (n *Network) RecvMessage() {
-	defer n.loopWG.Done()
-	for {
-		select {
-		case conn := <-n.connChan:
-			msg, err := conn.ReadMessage()
-			if err != nil {
-				log.Error(err)
-				continue
-			}
-			fmt.Printf("RecvMessage: %s, %s\n", msg.Protocol, string(msg.Message.Value))
-			err = n.dispatchMessage(conn, msg)
-			if err != nil {
-				log.Error(err)
-				continue
-			}
-		}
+func (n *Network) RecvMessage(conn p2p.Conn) error {
+	msg, err := conn.ReadMessage()
+	if err != nil {
+		return err
 	}
+	fmt.Println("\n接受的消息：", msg.Sender, msg.Message.TypeUrl)
+	err = n.dispatchMessage(conn, msg)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // dispatch message according to protocol

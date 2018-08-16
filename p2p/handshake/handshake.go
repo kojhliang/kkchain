@@ -64,12 +64,6 @@ func (hs *Handshake) handleMessage(s p2p.Stream, msg *Message) {
 	// successfully recv conn, add it
 	hs.host.AddConnection(pid, s.Conn())
 
-	// notify a new conn
-	hs.host.NotifyAll(func(n p2p.Notifiee) {
-		n.Connected(s.Conn())
-		glog.Infof("accept connection：%s", s.Conn().RemotePeer().String())
-	})
-
 	rpmes, err := handler(ctx, pid, msg)
 
 	// if nil response, return it before serializing

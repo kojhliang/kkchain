@@ -10,10 +10,11 @@ import (
 
 	"encoding/json"
 
+	"sync"
+
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/glog"
 	"github.com/invin/kkchain/p2p"
-	"sync"
 )
 
 const (

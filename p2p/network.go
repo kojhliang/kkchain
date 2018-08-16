@@ -40,7 +40,7 @@ type Network interface {
 
 	Bootstraps() []string
 
-	RecvMessage()
+	RecvMessage(conn Conn) error
 }
 
 // Conn wraps connection related operations, such as reading and writing
