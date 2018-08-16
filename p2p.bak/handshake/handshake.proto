@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package pb;
+
+option java_multiple_files = true;
+option java_package = "org.invin.kkchain.proto.handshake";
+option java_outer_classname = "KKChainProto";
+
+import "google/protobuf/any.proto";
+
+import "gogo/protobuf/gogoproto/gogo.proto";
+
+option (gogoproto.equal_all) = true;
+option (gogoproto.goproto_stringer_all) = false;
+option (gogoproto.gostring_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.stringer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.verbose_equal_all) = true;
+
+// Test options
+// FIXME: uncomment when fixed https://github.com/gogo/protobuf/issues/407
+// option (gogoproto.populate_all) = true;
+// option (gogoproto.testgen_all) = true;
+
+message Error {
+    // error code
+    int32   code = 1;
+    // description
+    string  desc = 2;
+}
+
+message Message {
+    enum Type {
+		HELLO = 0;
+		HELLO_OK = 1;
+        HELLO_ERROR = 2;
+    }
+
+    // defines what type of message it is.
+	Type type = 1;
+
+    // protodcol version
+    string protocol_version = 2;
+
+    // chain ID
+    bytes chain_id = 3;
+
+    // genesis hash
+    bytes genesis_hash = 4;
+
+    // head hash
+    bytes head_hash = 5;
+
+    // head num
+    uint64 head_num = 6;
+
+    // error info for HELLO_ERROR
+    Error error = 7;
+
+    // other parameters
+
+}
+
+
+
+
