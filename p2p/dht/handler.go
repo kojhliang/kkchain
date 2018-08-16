@@ -4,8 +4,9 @@ import (
 	"context"
 	"encoding/hex"
 
-	"github.com/invin/kkchain/p2p"
 	"time"
+
+	"github.com/invin/kkchain/p2p"
 )
 
 // dhthandler specifies the signature of functions that handle DHT messages.

@@ -23,7 +23,7 @@ func PeerIDToPBPeer(p PeerID) *Message_Peer {
 
 func PBPeerToPeerID(p Message_Peer) *PeerID {
 	pubk, err := hex.DecodeString(p.Id)
-	if err != nil || len(p.Addrs) != 1 {
+	if err != nil || len(p.Addrs) != 2 {
 		return nil
 	}
 
