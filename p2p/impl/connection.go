@@ -94,7 +94,6 @@ func (c *Connection) PrepareMessage(message proto.Message) (*protobuf.Message, e
 
 // WriteMessage writes pb message to the connection
 func (c *Connection) WriteMessage(msg *protobuf.Message) error {
-	// return c.write(c.conn, msg, &c.mux)
 	return c.sendMessage(c.conn, msg, &c.mux)
 }
 
@@ -197,17 +196,6 @@ func (c *Connection) ReadMessage() (*protobuf.Message, error) {
 
 	// FIXME: set remote peer before handshaking
 	c.remotePeer = p2p.ID(*msg.Sender)
-
-	// // Verify signature of message.
-	// if !crypto.Verify(
-	// 	n.opts.signaturePolicy,
-	// 	n.opts.hashPolicy,
-	// 	msg.Sender.PublicKey,
-	// 	SerializeMessage(msg.Sender, msg.Message.Value),
-	// 	msg.Signature,
-	// ) {
-	// 	return nil, errors.New("received message had an malformed signature")
-	// }
 
 	return msg, nil
 }

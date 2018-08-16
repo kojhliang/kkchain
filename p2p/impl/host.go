@@ -69,12 +69,6 @@ func (h *Host) Revoke(n p2p.Notifiee) error {
 	return nil
 }
 
-// notifyAll runs the notification function on all Notifiees
-// example:
-//
-// h.notifyAll(func(n p2p.Notifiee) {
-// 	n.Connected(newConn)
-// })
 func (h *Host) NotifyAll(notification func(n p2p.Notifiee)) {
 	h.notifyMux.Lock()
 	defer h.notifyMux.Unlock()
@@ -180,7 +174,6 @@ func (h *Host) Connect(address string, network p2p.Network) (p2p.Conn, error) {
 
 	conn := NewConnection(fd, network, h)
 	if conn != nil {
-		//*network.GetConnChan() <- conn
 		return conn, nil
 	}
 

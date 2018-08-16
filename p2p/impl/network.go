@@ -41,7 +41,6 @@ type Network struct {
 
 // NewNetwork creates a new Network instance with the specified configuration
 func NewNetwork(privateKeyPath, address string, conf p2p.Config) *Network {
-	//keys := ed25519.RandomKeyPair()
 	keys, _ := p2p.LoadNodeKeyFromFileOrCreateNew(privateKeyPath)
 	id := p2p.CreateID(address, keys.PublicKey)
 
