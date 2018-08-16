@@ -33,6 +33,7 @@ type Network struct {
 	BootstrapNodes []string
 	listenAddr     string
 	running        bool
+	connChan       chan p2p.Conn
 	quit           chan struct{}
 	lock           sync.Mutex
 	loopWG         sync.WaitGroup
@@ -100,6 +101,9 @@ func (n *Network) Start() error {
 	// dail
 	n.loopWG.Add(1)
 	go n.run()
+
+	n.loopWG.Add(1)
+	go n.RecvMessage()
 
 	return nil
 }
@@ -191,10 +195,7 @@ func (n *Network) run() {
 							if err != nil {
 								log.Error(err)
 							}
-							err = n.RecvMessage(conn)
-							if err != nil {
-								log.Error(err)
-							}
+							n.connChan <- conn
 						}
 					}
 				}
@@ -239,23 +240,26 @@ func (n *Network) Accept(listener net.Listener) {
 			continue
 		}
 
-		err = n.RecvMessage(conn)
-		if err != nil {
-			log.Error(err)
-			continue
-		}
+		n.connChan <- conn
 	}
 }
 
-func (n *Network) RecvMessage(conn p2p.Conn) error {
-	msg, err := conn.ReadMessage()
-	if err != nil {
-		return err
-	}
-	fmt.Println("\n接受的消息：", msg.Sender, msg.Message.TypeUrl)
-	err = n.dispatchMessage(conn, msg)
-	if err != nil {
-		return err
+func (n *Network) RecvMessage() {
+	defer n.loopWG.Done()
+	select {
+	case conn := <-n.connChan:
+		go func() {
+			for {
+				msg, err := conn.ReadMessage()
+				if err != nil {
+					continue
+				}
+				fmt.Println("\n接受的消息：", msg.Sender, msg.Message.TypeUrl)
+				err = n.dispatchMessage(conn, msg)
+				if err != nil {
+					continue
+				}
+			}
 	}
 	return nil
 }
