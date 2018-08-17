@@ -16,14 +16,14 @@ func NewMessage(typ Message_Type, key string) *Message {
 
 func PeerIDToPBPeer(p PeerID) *Message_Peer {
 
-	addrs := make([][]byte, 1)
+	addrs := make([][]byte, 0)
 	addrs = append(addrs, []byte(p.Address))
 	return &Message_Peer{Id: p.PublicKeyHex(), Addrs: addrs}
 }
 
 func PBPeerToPeerID(p Message_Peer) *PeerID {
 	pubk, err := hex.DecodeString(p.Id)
-	if err != nil || len(p.Addrs) != 2 {
+	if err != nil || len(p.Addrs) != 1 {
 		return nil
 	}
 

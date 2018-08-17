@@ -231,21 +231,23 @@ func (n *Network) Accept(listener net.Listener) {
 
 func (n *Network) RecvMessage() {
 	defer n.loopWG.Done()
-	select {
-	case conn := <-n.connChan:
-		go func() {
-			for {
-				msg, err := conn.ReadMessage()
-				if err != nil {
-					continue
+	for {
+		select {
+		case conn := <-n.connChan:
+			go func() {
+				for {
+					msg, err := conn.ReadMessage()
+					if err != nil {
+						continue
+					}
+					fmt.Println("\n接受的消息：", msg.Sender, msg.Message.TypeUrl, "\n")
+					err = n.dispatchMessage(conn, msg)
+					if err != nil {
+						continue
+					}
 				}
-				fmt.Println("\n接受的消息：", msg.Sender, msg.Message.TypeUrl, "\n")
-				err = n.dispatchMessage(conn, msg)
-				if err != nil {
-					continue
-				}
-			}
-		}()
+			}()
+		}
 	}
 }
 

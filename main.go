@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	port := flag.String("p", "9999", "")
+	port := flag.String("p", "9998", "")
 	sec := flag.Int("s", 120, "")
 	keypath := flag.String("k", "", "")
 	flag.Parse()
@@ -29,13 +29,11 @@ func main() {
 	net := impl.NewNetwork(*keypath, listen, config)
 	seconds := time.Duration(*sec)
 
-	peerPort := "9999"
-	if *port == "9999" {
-		peerPort = "9998"
+	if *port != "9998" {
 		remoteKeyPath := "node1.key"
 		pri, _ := p2p.LoadNodeKeyFromFile(remoteKeyPath)
 		pub, _ := ed25519.New().PrivateToPublic(pri)
-		node := "/ip4/127.0.0.1/tcp/" + peerPort
+		node := "/ip4/127.0.0.1/tcp/9998"
 		node = hex.EncodeToString(pub) + "@" + node
 		fmt.Printf("remote peer: %s\n", node)
 		net.BootstrapNodes = []string{node}

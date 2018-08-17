@@ -173,7 +173,7 @@ func (dht *DHT) syncLoop() {
 	dht.table.printTable()
 
 	//first sync
-	//dht.SyncRouteTable()
+	dht.SyncRouteTable()
 
 	//TODO: config timer
 	syncLoopTicker := time.NewTicker(DefaultSyncTableInterval)

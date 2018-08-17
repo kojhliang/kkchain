@@ -63,8 +63,8 @@ func (dht *DHT) handleFindPeer(ctx context.Context, p p2p.ID, pmes *Message) (_ 
 }
 
 func (dht *DHT) handleFindPeerResult(ctx context.Context, p p2p.ID, pmes *Message) (_ *Message, err error) {
-	fmt.Println("handleFindPeerResult...")
 	pbPeers := pmes.CloserPeers
+	fmt.Printf("handleFindPeerResult %d\n", len(pbPeers))
 	for _, p := range pbPeers {
 		peer := PBPeerToPeerID(*p)
 		dht.table.Update(*peer)
