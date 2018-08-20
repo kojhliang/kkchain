@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package protobuf;
+
+option java_multiple_files = true;
+option java_package = "org.invin.kkchain.proto";
+option java_outer_classname = "KKChainProto";
+
+import "google/protobuf/any.proto";
+
+import "gogo/protobuf/gogoproto/gogo.proto";
+
+option (gogoproto.equal_all) = true;
+option (gogoproto.goproto_stringer_all) = false;
+option (gogoproto.gostring_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.stringer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.verbose_equal_all) = true;
+
+// Test options
+// FIXME: uncomment when fixed https://github.com/gogo/protobuf/issues/407
+// option (gogoproto.populate_all) = true;
+// option (gogoproto.testgen_all) = true;
+
+message ID {
+    bytes public_key = 1;
+    string address = 2;
+}
+
+message Message {
+    // Protocol specific message
+    google.protobuf.Any message = 1;
+
+    // Sender's address and public key.
+    ID sender = 2;
+
+    // Sender's signature of message.
+    bytes signature = 3;
+
+    // message_nonce is the sequence ID.
+    uint64 message_nonce = 4;
+
+    // protocol defines the protocol string
+    string protocol = 5;
+
+    // compress
+    uint32 compress_algorithm = 6;
+}
